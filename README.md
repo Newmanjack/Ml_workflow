@@ -124,7 +124,8 @@ cfg = {
     "target": {"column": "Revenue", "auto_detect": True},
 }
 ovr = {
-    "join_key": {"header": "OrderID", "line": "OrderID"},
+    # join_key supports lists for composite joins
+    "join_key": {"header": ["OrderID", "Company"], "line": ["OrderID", "Company"]},
     "header": {"date": "OrderDate", "amount": "TotalAmount"},
     "line": {"date": "LineDate", "amount": "LineAmount"},
 }
