@@ -25,6 +25,7 @@ dependencies = [
 fabric = ["deltalake"]
 profiling = ["ydata-profiling"]
 dev = ["pytest", "build"]
+spark = ["pyspark"]
 
 [tool.setuptools]
 packages = ["smart_pipeline"]

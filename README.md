@@ -112,3 +112,17 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
 - Optional extras:
   - `pip install "smart-pipeline-preprocessing[fabric]@ git+https://github.com/Newmanjack/Ml_workflow.git"` (adds `deltalake`)
   - `pip install "smart-pipeline-preprocessing[profiling]@ git+https://github.com/Newmanjack/Ml_workflow.git"` (adds `ydata-profiling`)
+  - `pip install "smart-pipeline-preprocessing[spark]@ git+https://github.com/Newmanjack/Ml_workflow.git"` (adds `pyspark`)
+
+## Using with Spark
+- Keep heavy joins/filters/aggregations in Spark; only move reduced data to pandas.
+- Helper: `from smart_pipeline import spark_to_pandas`
+  ```python
+  pdf = spark_to_pandas(
+      spark_df,
+      columns=["OrderID", "OrderDate", "TotalAmount"],
+      limit=100_000,          # or sample_fraction=0.1
+      parquet_path="/tmp/headers.parquet",  # optional: write/read parquet to avoid driver OOM
+  )
+  ```
+- Then call `run_pipeline_on_dfs(headers_pdf, lines_pdf, config_dict=..., overrides=...)`.
