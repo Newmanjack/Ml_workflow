@@ -72,7 +72,7 @@ df, context, validation = run_pipeline_on_dfs(
     overrides=overrides,
 )
 display(df.head())
-print(context)
+print(context)  # discovery context
 for check in validation:
     print(check)
 ```
@@ -90,7 +90,7 @@ cfg = {
     },
     "profiling": {"enabled": False},  # skip plots in headless
 }
-df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
+df, context, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
 ```
 - Each line table is processed separately; results are stitched on the Date index with suffixed columns (e.g., `TotalAmount_line_items`, `TotalAmount_line_items_returns`). Validation runs per line table and is merged.
 
@@ -123,7 +123,7 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
   ```python
   # Simplest Spark path (auto-reduce, then pipeline)
   from smart_pipeline import run_pipeline_auto as auto
-  df, context, validation = run_pipeline_auto(
+  df, spark_session, validation = auto(
       headers_df=headers_spark_df,
       lines_df=lines_spark_df,
       config_dict={"profiling": {"enabled": False}, "feature_engineering": {"enabled": True}},

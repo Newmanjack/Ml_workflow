@@ -47,27 +47,27 @@ class PipelineRunner:
         self.logger.info("Starting pipeline run_id=%s", run_id)
 
         aggregated_outputs = []
-        contexts = []
+        spark_sessions = []
         validations = []
         feature_catalog = {}
 
         for lt in self._line_tables():
             self.logger.info("Processing line table: %s", lt)
-            df, ctx = run_smart_discovery(
+            df, spark_session = run_smart_discovery(
                 self.con, cfg.sources, cfg.overrides, cfg.discovery, current_line_table=lt
             )
             if cfg.validation.enabled:
-                validation_results = run_smart_validation(self.con, cfg.sources, ctx)
+                validation_results = run_smart_validation(self.con, cfg.sources, spark_session)
             else:
                 validation_results = []
 
             aggregated_outputs.append({"line_table": lt, "df": df})
-            contexts.append(ctx)
+            spark_sessions.append(spark_session)
             validations.append(validation_results)
 
             if cfg.profiling.enabled:
                 sampled = maybe_sample_df(df, cfg.profiling.sample_size)
-                run_smart_profiling(sampled, {"columns": ctx.strategy_columns}, f"Aggregated Data ({lt})")
+                run_smart_profiling(sampled, {"columns": spark_session.strategy_columns}, f"Aggregated Data ({lt})")
 
         # If multiple line tables, stitch by date with suffixes
         if len(aggregated_outputs) > 1:
@@ -76,11 +76,11 @@ class PipelineRunner:
                 df = item["df"].rename(columns={"TotalAmount": f"TotalAmount_{item['line_table']}"})
                 combined = df if combined is None else combined.join(df, how="outer")
             df = combined.sort_index()
-            ctx = contexts[0]
+            spark_session = spark_sessions[0]
             validation_results = [v for sub in validations for v in sub]
         else:
             df = aggregated_outputs[0]["df"]
-            ctx = contexts[0]
+            spark_session = spark_sessions[0]
             validation_results = validations[0]
 
         if cfg.feature_engineering.enabled:
@@ -89,15 +89,15 @@ class PipelineRunner:
                 df, cfg.feature_engineering, target_columns=list(df.select_dtypes(include=["number"]).columns)
             )
             df = df.join(fe_df)
-            ctx.feature_catalog = feature_catalog
+            spark_session.feature_catalog = feature_catalog
 
         if cfg.metadata.persist_context:
             output_dir = ensure_dir(cfg.metadata.output_dir)
             payload = {
                 "run_id": run_id,
-                "strategy": ctx.selected_strategy,
-                "confidence": ctx.selected_confidence,
-                "context": asdict(ctx),
+                "strategy": spark_session.selected_strategy,
+                "confidence": spark_session.selected_confidence,
+                "context": asdict(spark_session),
                 "validation": [asdict(v) for v in validation_results],
                 "row_count": len(df) if df is not None else 0,
                 "line_tables": self._line_tables(),
@@ -110,7 +110,7 @@ class PipelineRunner:
             out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
             self.logger.info("Wrote run metadata to %s", out_path)
 
-        return df, ctx, validation_results
+        return df, spark_session, validation_results
 
 
 def main():

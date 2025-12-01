@@ -73,9 +73,9 @@ def run_pipeline_on_dfs(
     con = create_duckdb_with_tables(header_df, line_df, cfg.sources)
 
     runner = PipelineRunner(cfg, logger=logger, connection=con)
-    df, ctx, validation_results = runner.run()
+    df, spark_session, validation_results = runner.run()
 
-    context_dict = asdict(ctx)
+    context_dict = asdict(spark_session)
     return df, context_dict, validation_results
 
 
