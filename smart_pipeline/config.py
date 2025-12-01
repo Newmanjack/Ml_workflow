@@ -74,6 +74,12 @@ class ValidationConfig(BaseModel):
     enabled: bool = True
 
 
+class DriftConfig(BaseModel):
+    enabled: bool = False
+    mean_pct_threshold: float = 10.0  # percent change
+    std_pct_threshold: float = 20.0   # percent change
+
+
 class MetadataConfig(BaseModel):
     output_dir: str = "logs"
     persist_context: bool = True
@@ -89,6 +95,7 @@ class PipelineConfig(BaseModel):
     profiling: ProfilingConfig = ProfilingConfig()
     feature_engineering: FeatureEngineeringConfig = FeatureEngineeringConfig()
     validation: ValidationConfig = ValidationConfig()
+    drift: DriftConfig = DriftConfig()
     metadata: MetadataConfig = MetadataConfig()
 
     @property

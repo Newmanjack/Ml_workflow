@@ -15,6 +15,7 @@ from .profiling import run_smart_profiling
 from .feature_engineering import generate_time_features
 from .stats import basic_stats, prune_low_variance, detect_outliers_iqr, detect_gaps_datetime_index
 from .result import PipelineResult
+import glob
 from .utils import ensure_dir, maybe_sample_df, setup_logging
 from .validation import run_smart_validation
 
@@ -130,7 +131,49 @@ class PipelineRunner:
             self.logger.info("Wrote run metadata to %s", out_path)
 
         drift = {}
+        # Drift: compare to latest prior run stats if enabled
+        if cfg.drift.enabled:
+            prior_stats = self._load_latest_stats(cfg.metadata.output_dir, exclude_run_id=run_id)
+            drift = self._compute_drift(run_stats.get("post_features", {}), prior_stats, cfg.drift)
+
         return PipelineResult(df=df, spark_session=spark_session, validation=validation_results, stats=run_stats, drift=drift)
+
+    def _load_latest_stats(self, output_dir: str, exclude_run_id: str):
+        paths = sorted(glob.glob(str(Path(output_dir) / "*.json")), reverse=True)
+        for p in paths:
+            if exclude_run_id in p:
+                continue
+            try:
+                import json
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                stats = data.get("stats", {})
+                if stats:
+                    return stats.get("post_features", {})
+            except Exception:
+                continue
+        return {}
+
+    def _compute_drift(self, current_stats, prior_stats, drift_cfg):
+        if not current_stats or not prior_stats:
+            return {}
+        drift_report = {}
+        for col, cur in current_stats.items():
+            if col not in prior_stats:
+                continue
+            prev = prior_stats[col]
+            cur_mean, prev_mean = cur.get("mean"), prev.get("mean")
+            cur_std, prev_std = cur.get("std"), prev.get("std")
+            mean_pct = abs((cur_mean - prev_mean) / prev_mean * 100) if prev_mean else None
+            std_pct = abs((cur_std - prev_std) / prev_std * 100) if prev_std else None
+            alerts = []
+            if mean_pct is not None and mean_pct > drift_cfg.mean_pct_threshold:
+                alerts.append(f"mean drift {mean_pct:.1f}%")
+            if std_pct is not None and std_pct > drift_cfg.std_pct_threshold:
+                alerts.append(f"std drift {std_pct:.1f}%")
+            if alerts:
+                drift_report[col] = {"mean_pct": mean_pct, "std_pct": std_pct, "alerts": alerts}
+        return drift_report
 
 
 def main():
