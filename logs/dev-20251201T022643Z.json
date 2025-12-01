@@ -1,0 +1,71 @@
+{
+  "run_id": "dev-20251201T022643Z",
+  "strategy": "header_only",
+  "confidence": 90.0,
+  "context": {
+    "header_date": "OrderDate",
+    "header_amount": "TotalAmount",
+    "line_date": "LineDate",
+    "line_amount": "LineAmount",
+    "join_keys": {
+      "header": "OrderID",
+      "line": "OrderID"
+    },
+    "overrides_used": false,
+    "selected_strategy": "header_only",
+    "selected_confidence": 90.0,
+    "strategy_columns": {
+      "date": "OrderDate",
+      "amount": "TotalAmount",
+      "line_table": "line_items"
+    }
+  },
+  "validation": [
+    {
+      "check_name": "JoinAnalysis",
+      "status": "PASS",
+      "message": "Referential integrity looks solid.",
+      "details": {
+        "orphans": 0,
+        "childless_headers": 0,
+        "orphan_pct": 0.0,
+        "childless_pct": 0.0
+      }
+    },
+    {
+      "check_name": "LinePK",
+      "status": "PASS",
+      "message": "Discovered valid Line Primary Key: 'LineAmount'",
+      "details": {
+        "name": "LineAmount",
+        "type": "DOUBLE",
+        "total_rows": 4,
+        "non_null": 4,
+        "unique": 4,
+        "null_pct": 0.0,
+        "unique_pct": 100.0,
+        "is_candidate_pk": true
+      }
+    },
+    {
+      "check_name": "HeaderPK",
+      "status": "PASS",
+      "message": "Discovered valid Header Primary Key: 'OrderDate'",
+      "details": {
+        "suggested_pk": "OrderDate"
+      }
+    },
+    {
+      "check_name": "Reconciliation",
+      "status": "PASS",
+      "message": "Totals match within 1% (0.00%).",
+      "details": {
+        "header_total": 300.0,
+        "line_total": 300.0,
+        "diff": 0.0,
+        "pct_diff": 0.0
+      }
+    }
+  ],
+  "row_count": 2
+}

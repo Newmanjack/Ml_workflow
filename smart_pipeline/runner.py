@@ -1,0 +1,127 @@
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from dataclasses import asdict
+from pathlib import Path
+from typing import Optional
+
+import duckdb
+
+from .config import PipelineConfig, load_config
+from .discovery import run_smart_discovery
+from .profiling import run_smart_profiling
+from .feature_engineering import generate_time_features
+from .utils import ensure_dir, maybe_sample_df, setup_logging
+from .validation import run_smart_validation
+
+
+def _create_connection(cfg) -> duckdb.DuckDBPyConnection:
+    if cfg.engine.lower() != "duckdb":
+        raise ValueError(f"Unsupported engine: {cfg.engine}")
+    return duckdb.connect(cfg.database, **cfg.extra)
+
+
+class PipelineRunner:
+    """Orchestrates discovery → validation → profiling."""
+
+    def __init__(
+        self,
+        config: PipelineConfig,
+        logger: Optional[logging.Logger] = None,
+        connection: Optional[duckdb.DuckDBPyConnection] = None,
+    ):
+        self.config = config
+        self.logger = logger or setup_logging(config.logging.log_dir, config.logging.level)
+        self.con = connection or _create_connection(config.connection)
+
+    def _line_tables(self):
+        if self.config.sources.line_tables:
+            return self.config.sources.line_tables
+        return [self.config.sources.line_table]
+
+    def run(self):
+        cfg = self.config
+        run_id = cfg.run_id
+        self.logger.info("Starting pipeline run_id=%s", run_id)
+
+        aggregated_outputs = []
+        contexts = []
+        validations = []
+        feature_catalog = {}
+
+        for lt in self._line_tables():
+            self.logger.info("Processing line table: %s", lt)
+            df, ctx = run_smart_discovery(
+                self.con, cfg.sources, cfg.overrides, cfg.discovery, current_line_table=lt
+            )
+            if cfg.validation.enabled:
+                validation_results = run_smart_validation(self.con, cfg.sources, ctx)
+            else:
+                validation_results = []
+
+            aggregated_outputs.append({"line_table": lt, "df": df})
+            contexts.append(ctx)
+            validations.append(validation_results)
+
+            if cfg.profiling.enabled:
+                sampled = maybe_sample_df(df, cfg.profiling.sample_size)
+                run_smart_profiling(sampled, {"columns": ctx.strategy_columns}, f"Aggregated Data ({lt})")
+
+        # If multiple line tables, stitch by date with suffixes
+        if len(aggregated_outputs) > 1:
+            combined = None
+            for item in aggregated_outputs:
+                df = item["df"].rename(columns={"TotalAmount": f"TotalAmount_{item['line_table']}"})
+                combined = df if combined is None else combined.join(df, how="outer")
+            df = combined.sort_index()
+            ctx = contexts[0]
+            validation_results = [v for sub in validations for v in sub]
+        else:
+            df = aggregated_outputs[0]["df"]
+            ctx = contexts[0]
+            validation_results = validations[0]
+
+        if cfg.feature_engineering.enabled:
+            self.logger.info("Generating time-series features")
+            fe_df, feature_catalog = generate_time_features(
+                df, cfg.feature_engineering, target_columns=list(df.select_dtypes(include=["number"]).columns)
+            )
+            df = df.join(fe_df)
+            ctx.feature_catalog = feature_catalog
+
+        if cfg.metadata.persist_context:
+            output_dir = ensure_dir(cfg.metadata.output_dir)
+            payload = {
+                "run_id": run_id,
+                "strategy": ctx.selected_strategy,
+                "confidence": ctx.selected_confidence,
+                "context": asdict(ctx),
+                "validation": [asdict(v) for v in validation_results],
+                "row_count": len(df) if df is not None else 0,
+                "line_tables": self._line_tables(),
+                "feature_engineering": {
+                    "enabled": cfg.feature_engineering.enabled,
+                    "feature_columns": [c for cols in feature_catalog.values() for c in cols],
+                },
+            }
+            out_path = Path(output_dir) / f"{run_id}.json"
+            out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            self.logger.info("Wrote run metadata to %s", out_path)
+
+        return df, ctx, validation_results
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run Smart ML Preprocessing pipeline.")
+    parser.add_argument("--config", default="config/base_config.yaml", help="Path to YAML config.")
+    args = parser.parse_args()
+
+    cfg = load_config(args.config)
+    runner = PipelineRunner(cfg)
+    runner.run()
+
+
+if __name__ == "__main__":
+    main()

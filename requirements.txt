@@ -1,0 +1,8 @@
+duckdb
+pandas
+numpy
+pydantic
+PyYAML
+rapidfuzz
+matplotlib
+pytest

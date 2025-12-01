@@ -1,0 +1,111 @@
+2025-12-01 13:19:33,162 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T021933Z
+2025-12-01 13:19:33,164 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:19:33,164 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:19:33,165 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:19:33,172 [INFO] smart_pipeline.profiling - Profiling dataset 'Aggregated Data' using column 'TotalAmount'
+2025-12-01 13:19:33,173 [INFO] smart_pipeline.profiling - ydata_profiling not installed; using lightweight profiling.
+2025-12-01 13:19:33,175 [INFO] smart_pipeline.profiling - Summary statistics:
+       TotalAmount
+count     2.000000
+mean    150.000000
+std      70.710678
+min     100.000000
+1%      101.000000
+5%      105.000000
+25%     125.000000
+50%     150.000000
+75%     175.000000
+95%     195.000000
+99%     199.000000
+max     200.000000
+2025-12-01 13:19:33,187 [INFO] smart_pipeline.profiling - Time range 2023-01-01 to 2023-01-02 | completeness 100.00% (2 observed / 2 days)
+2025-12-01 13:21:47,280 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022147Z
+2025-12-01 13:21:47,281 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:21:47,281 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:21:47,282 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:21:47,289 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T022147Z.json
+2025-12-01 13:21:47,309 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:21:47,310 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:21:47,312 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:21:47,329 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:21:47,329 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:21:47,330 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:09,967 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022209Z
+2025-12-01 13:22:09,969 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:09,969 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:09,971 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:09,982 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T022209Z.json
+2025-12-01 13:22:09,997 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:09,997 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:09,998 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:10,021 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:10,021 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:10,022 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:22,064 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022222Z
+2025-12-01 13:22:22,066 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:22,066 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:22,068 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:22,077 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T022222Z.json
+2025-12-01 13:22:22,091 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:22,091 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:22,092 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:22:22,126 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:22:22,126 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:22:22,127 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:26:43,396 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022643Z
+2025-12-01 13:26:43,397 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:26:43,397 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:26:43,397 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:26:43,399 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:26:43,406 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T022643Z.json
+2025-12-01 13:26:43,477 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022643Z
+2025-12-01 13:26:43,478 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:26:43,478 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:26:43,479 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:26:43,480 [INFO] smart_pipeline - Processing line table: line_items_returns
+2025-12-01 13:26:43,483 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:26:43,489 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:26:43,506 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:26:43,506 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:26:43,508 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:26:43,527 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:26:43,528 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:26:43,529 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:27:03,146 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022703Z
+2025-12-01 13:27:03,146 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:27:03,147 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:27:03,147 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:27:03,149 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:27:03,159 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T022703Z.json
+2025-12-01 13:27:03,176 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T022703Z
+2025-12-01 13:27:03,176 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:27:03,176 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:27:03,176 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:27:03,178 [INFO] smart_pipeline - Processing line table: line_items_returns
+2025-12-01 13:27:03,178 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:27:03,178 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:27:03,197 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:27:03,197 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:27:03,198 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:27:03,218 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:27:03,218 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:27:03,219 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:31:51,515 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T023151Z
+2025-12-01 13:31:51,516 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:31:51,517 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:31:51,517 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:31:51,519 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:31:51,528 [INFO] smart_pipeline - Wrote run metadata to logs/dev-20251201T023151Z.json
+2025-12-01 13:31:51,550 [INFO] smart_pipeline - Starting pipeline run_id=dev-20251201T023151Z
+2025-12-01 13:31:51,550 [INFO] smart_pipeline - Processing line table: line_items
+2025-12-01 13:31:51,551 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:31:51,551 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:31:51,553 [INFO] smart_pipeline - Processing line table: line_items_returns
+2025-12-01 13:31:51,553 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:31:51,553 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:31:51,570 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:31:51,570 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:31:51,571 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount
+2025-12-01 13:31:51,601 [INFO] smart_pipeline.discovery - Selected strategy header_only with confidence 90.0
+2025-12-01 13:31:51,601 [INFO] smart_pipeline.discovery - Columns used: {'date': 'OrderDate', 'amount': 'TotalAmount'}
+2025-12-01 13:31:51,604 [INFO] smart_pipeline.validation - Validating with strategy=header_only join={'header': 'OrderID', 'line': 'OrderID'} header=TotalAmount line=LineAmount

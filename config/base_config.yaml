@@ -1,0 +1,43 @@
+run_id_prefix: dev
+logging:
+  level: INFO
+  log_dir: logs
+connection:
+  engine: duckdb
+  database: ":memory:"
+sources:
+  header_table: headers
+  line_table: line_items
+  line_tables: null
+overrides:
+  header:
+    date: null
+    amount: null
+  line:
+    date: null
+    amount: null
+  join_key:
+    header: null
+    line: null
+  per_line: {}
+discovery:
+  strategy_preference:
+    - header_only
+    - line_join_header
+    - line_direct
+  min_confidence: 0.0
+profiling:
+  enabled: true
+  sample_size: 5000
+feature_engineering:
+  enabled: false
+  lag_periods: [1, 7, 28]
+  rolling_windows: [7, 28]
+  pct_change_windows: [7]
+  add_date_parts: true
+  drop_na: false
+validation:
+  enabled: true
+metadata:
+  output_dir: logs
+  persist_context: true
