@@ -122,7 +122,7 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
    - `run_pipeline_auto`: minimal entry point; detects Spark vs pandas, reduces (limit/sample) if Spark, then runs the pipeline.
   ```python
   # Simplest Spark path (auto-reduce, then pipeline)
-  from smart_pipeline import run_pipeline_auto
+  from smart_pipeline import run_pipeline_auto as auto
   df, context, validation = run_pipeline_auto(
       headers_df=headers_spark_df,
       lines_df=lines_spark_df,

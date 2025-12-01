@@ -191,9 +191,15 @@ def run_pipeline_auto(
     else:
         lines_pdf = lines_df
 
+    # Default config if none provided
+    effective_cfg = config_dict or {
+        "profiling": {"enabled": False},
+        "feature_engineering": {"enabled": True, "lag_periods": [1, 7], "rolling_windows": [7]},
+    }
+
     return run_pipeline_on_dfs(
         header_df=headers_pdf,
         line_df=lines_pdf,
-        config_dict=config_dict,
+        config_dict=effective_cfg,
         overrides=overrides,
     )
