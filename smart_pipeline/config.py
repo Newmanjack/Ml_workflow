@@ -23,6 +23,7 @@ class TableConfig(BaseModel):
     line_table: str = "line_items"
     line_tables: list[str] | None = None  # optional multi-line support
     reduction: Dict[str, Any] | None = None  # optional Spark reduction rules
+    column_policies: Dict[str, Any] | None = None  # optional per-column policies
 
 
 class ColumnOverride(BaseModel):
@@ -78,6 +79,8 @@ class DriftConfig(BaseModel):
     enabled: bool = False
     mean_pct_threshold: float = 10.0  # percent change
     std_pct_threshold: float = 20.0   # percent change
+    null_pct_threshold: float = 5.0   # percent change
+    distinct_pct_threshold: float = 10.0
 
 
 class MetadataConfig(BaseModel):

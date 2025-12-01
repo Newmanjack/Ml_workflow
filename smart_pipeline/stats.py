@@ -20,6 +20,8 @@ def basic_stats(df: pd.DataFrame, numeric_cols=None):
             "std": float(s.std()),
             "min": float(s.min()),
             "max": float(s.max()),
+            "null_rate": float(1 - len(s) / len(df)) if len(df) else 0.0,
+            "distinct": int(df[col].nunique(dropna=True)),
         }
     return stats
 

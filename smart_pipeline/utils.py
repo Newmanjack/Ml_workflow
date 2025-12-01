@@ -62,3 +62,48 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             out[col] = series.map(lambda x: float(x) if isinstance(x, decimal.Decimal) else x)
 
     return out
+
+
+def apply_column_policies(df: pd.DataFrame, policies: Optional[dict]) -> pd.DataFrame:
+    """
+    Apply per-column policies:
+      - expected_type: "int","float","str","date"
+      - null_policy: "drop","fill","keep"
+      - fill_value: value used when null_policy="fill"
+      - date_format: strptime format when expected_type="date"
+      - drop_high_cardinality: bool and cardinality_threshold
+    """
+    if not policies or df is None or df.empty:
+        return df
+
+    out = df.copy()
+    for col, policy in policies.items():
+        if col not in out.columns:
+            continue
+        p = policy or {}
+        expected_type = p.get("expected_type")
+        null_policy = p.get("null_policy", "keep")
+        fill_value = p.get("fill_value")
+        date_format = p.get("date_format")
+        drop_high_card = p.get("drop_high_cardinality", False)
+        card_threshold = p.get("cardinality_threshold", 1000)
+
+        if expected_type == "date":
+            out[col] = pd.to_datetime(out[col], errors="coerce", format=date_format)
+        elif expected_type == "int":
+            out[col] = pd.to_numeric(out[col], errors="coerce").astype("Int64")
+        elif expected_type == "float":
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+        elif expected_type == "str":
+            out[col] = out[col].astype(str)
+
+        if null_policy == "drop":
+            out = out.dropna(subset=[col])
+        elif null_policy == "fill":
+            out[col] = out[col].fillna(fill_value)
+
+        if drop_high_card:
+            if out[col].nunique(dropna=True) > card_threshold:
+                out = out.drop(columns=[col])
+
+    return out
