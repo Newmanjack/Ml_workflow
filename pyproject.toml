@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-pipeline-preprocessing"
+version = "0.1.0"
+description = "Smart ML preprocessing pipeline: discovery, validation, profiling, multi-line support, feature engineering."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Proprietary" }
+authors = [{ name = "Smart Flow", email = "noreply@example.com" }]
+keywords = ["data-pipeline", "etl", "duckdb", "validation", "feature-engineering"]
+dependencies = [
+  "duckdb",
+  "pandas",
+  "numpy",
+  "pydantic",
+  "PyYAML",
+  "rapidfuzz",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+fabric = ["deltalake"]
+profiling = ["ydata-profiling"]
+dev = ["pytest", "build"]
+
+[tool.setuptools]
+packages = ["smart_pipeline"]
+
+[tool.setuptools.package-data]
+smart_pipeline = []

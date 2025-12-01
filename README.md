@@ -104,3 +104,11 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
 - Wire in real lakehouse/DB connection details via config
 - Extend validation with business rules or additional anomaly checks
 - Add CI (GitHub Actions) to run tests + linting on commits
+
+## Installation (Git/pip)
+- Public repo: `pip install git+https://github.com/Newmanjack/Ml_workflow.git`
+- Private repo: use a PAT with `repo` scope, stored as an env var/secret:
+  `pip install git+https://${GH_TOKEN}@github.com/Newmanjack/Ml_workflow.git`
+- Optional extras:
+  - `pip install "smart-pipeline-preprocessing[fabric]@ git+https://github.com/Newmanjack/Ml_workflow.git"` (adds `deltalake`)
+  - `pip install "smart-pipeline-preprocessing[profiling]@ git+https://github.com/Newmanjack/Ml_workflow.git"` (adds `ydata-profiling`)
