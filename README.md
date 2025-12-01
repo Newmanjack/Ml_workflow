@@ -103,6 +103,74 @@ df, context, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cf
 - After running, you can export results/metadata: `from smart_pipeline import export_pipeline_result; export_pipeline_result(result, output_dir="logs")`.
 - Target column: set `target.column` (or rely on auto-detect over candidate names/numeric columns); available on `PipelineResult.target_column` and in exported metadata.
 
+## Quick-start examples
+
+### Minimal (auto) — works with Spark or pandas inputs
+```python
+from smart_pipeline import run_pipeline_auto as auto
+
+result = auto(headers_df=df1, lines_df=df2)  # df1/df2 can be Spark or pandas
+df = result.df                       # aggregated + features
+print("Target:", result.target_column)
+for v in result.validation:
+    print(v)
+```
+
+### With target, overrides, and feature flags
+```python
+cfg = {
+    "profiling": {"enabled": False},
+    "feature_engineering": {"enabled": True, "lag_periods": [1,7], "rolling_windows": [7]},
+    "target": {"column": "Revenue", "auto_detect": True},
+}
+ovr = {
+    "join_key": {"header": "OrderID", "line": "OrderID"},
+    "header": {"date": "OrderDate", "amount": "TotalAmount"},
+    "line": {"date": "LineDate", "amount": "LineAmount"},
+}
+result = auto(df1, df2, config_dict=cfg, overrides=ovr)
+```
+
+### Multiple line tables (Spark or pandas)
+```python
+cfg = {
+    "sources": {
+        "header_table": "headers",
+        "line_table": "line_items",
+        "line_tables": ["line_items", "line_items_returns"],
+    },
+    "profiling": {"enabled": False},
+    "feature_engineering": {"enabled": True},
+}
+ovr = {
+    "join_key": {"header": "OrderID", "line": "OrderID"},
+    "per_line": {"line_items_returns": {"amount": "ReturnAmount"}},
+}
+result = auto(df1, df2, config_dict=cfg, overrides=ovr)
+```
+
+### Column policies (type/null/cardinality) to clean inputs
+```python
+cfg = {
+    "sources": {
+        "column_policies": {
+            "OrderDate": {"expected_type": "date", "null_policy": "drop"},
+            "TotalAmount": {"expected_type": "float", "null_policy": "fill", "fill_value": 0},
+            "CustomerCode": {"drop_high_cardinality": True, "cardinality_threshold": 5000},
+        }
+    },
+    "feature_engineering": {"enabled": True, "prune_low_variance": 0.0},
+}
+result = auto(df1, df2, config_dict=cfg)
+```
+
+### Export aggregated data + metadata
+```python
+from smart_pipeline import export_pipeline_result
+paths = export_pipeline_result(result, output_dir="logs")
+print(paths)
+```
+
 ## Next steps
 - Wire in real lakehouse/DB connection details via config
 - Extend validation with business rules or additional anomaly checks
