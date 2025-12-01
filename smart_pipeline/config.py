@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -31,9 +31,12 @@ class ColumnOverride(BaseModel):
     amount: Optional[str] = None
 
 
+JoinKeyType = Union[str, list[str]]
+
+
 class JoinKeyOverride(BaseModel):
-    header: Optional[str] = None
-    line: Optional[str] = None
+    header: Optional[JoinKeyType] = None
+    line: Optional[JoinKeyType] = None
 
 
 class OverridesConfig(BaseModel):

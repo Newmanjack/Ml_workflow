@@ -70,6 +70,12 @@ class SmartDiscoveryEngine:
     def _quote(self, identifier: str) -> str:
         return '"' + identifier.replace('"', '""') + '"'
 
+    def _join_expr(self, left_cols, right_cols):
+        if isinstance(left_cols, list) and isinstance(right_cols, list):
+            conditions = [f"l.{self._quote(lc)} = h.{self._quote(rc)}" for lc, rc in zip(left_cols, right_cols)]
+            return " AND ".join(conditions)
+        return f"l.{self._quote(right_cols)} = h.{self._quote(left_cols)}"
+
     def _describe_table(self, table_name: str) -> Sequence[Tuple]:
         return self.con.execute(f"DESCRIBE {table_name}").fetchall()
 
@@ -298,13 +304,14 @@ class SmartDiscoveryEngine:
             and ctx.join_keys.get("header")
             and ctx.join_keys.get("line")
         ):
+            join_expr = self._join_expr(ctx.join_keys["header"], ctx.join_keys["line"])
             sql = f"""
             SELECT
                 CAST(h.{self._quote(ctx.header_date)} AS DATE) AS OrderDate,
                 SUM(l.{self._quote(ctx.line_amount)}) AS TotalAmount
             FROM {self.current_line_table} l
             JOIN {self.tables.header_table} h
-              ON l.{self._quote(ctx.join_keys['line'])} = h.{self._quote(ctx.join_keys['header'])}
+              ON {join_expr}
             WHERE l.{self._quote(ctx.line_amount)} IS NOT NULL
             GROUP BY 1
             ORDER BY 1

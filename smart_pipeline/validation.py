@@ -278,26 +278,30 @@ class SmartValidator:
         except Exception as e:
             return ValidationResult("Reconciliation", "ERROR", str(e), {})
 
-    def analyze_join_relationship(self, header_key: str, line_key: str) -> ValidationResult:
+    def analyze_join_relationship(self, header_key: str | list[str], line_key: str | list[str]) -> ValidationResult:
         try:
             header_table = self.tables.header_table
             line_table = self.current_line_table
-            hk_q = self._quote(header_key)
-            lk_q = self._quote(line_key)
+            if isinstance(header_key, list) and isinstance(line_key, list):
+                join_conditions = " AND ".join(
+                    [f"l.{self._quote(lk)} = h.{self._quote(hk)}" for hk, lk in zip(header_key, line_key)]
+                )
+            else:
+                join_conditions = f"l.{self._quote(line_key)} = h.{self._quote(header_key)}"
 
             orphan_query = f"""
             SELECT COUNT(*)
             FROM {line_table} l
-            LEFT JOIN {header_table} h ON l.{lk_q} = h.{hk_q}
-            WHERE h.{hk_q} IS NULL
+            LEFT JOIN {header_table} h ON {join_conditions}
+            WHERE {" AND ".join([f"h.{self._quote(hk)} IS NULL" for hk in header_key]) if isinstance(header_key, list) else f"h.{self._quote(header_key)} IS NULL"}
             """
             orphan_count = self.con.execute(orphan_query).fetchone()[0]
 
             childless_query = f"""
             SELECT COUNT(*)
             FROM {header_table} h
-            LEFT JOIN {line_table} l ON h.{hk_q} = l.{lk_q}
-            WHERE l.{lk_q} IS NULL
+            LEFT JOIN {line_table} l ON {join_conditions}
+            WHERE {" AND ".join([f"l.{self._quote(lk)} IS NULL" for lk in line_key]) if isinstance(line_key, list) else f"l.{self._quote(line_key)} IS NULL"}
             """
             childless_count = self.con.execute(childless_query).fetchone()[0]
 
@@ -343,7 +347,7 @@ class SmartValidator:
             return ValidationResult("JoinAnalysis", "ERROR", str(e), {})
 
     def _find_better_join_keys(
-        self, header_table: str, line_table: str, current_h_key: str, current_l_key: str
+        self, header_table: str, line_table: str, current_h_key, current_l_key
     ) -> Optional[str]:
         try:
             h_profiles = self._scan_all_columns(header_table)
