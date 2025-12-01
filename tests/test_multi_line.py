@@ -47,7 +47,8 @@ def test_multiple_line_tables_combines_results():
         metadata={"persist_context": False},
     )
     runner = PipelineRunner(cfg, connection=con)
-    df, spark_session, results = runner.run()
+    result = runner.run()
+    df, spark_session, results = result.df, result.spark_session, result.validation
 
     assert "TotalAmount_line_items" in df.columns
     assert "TotalAmount_line_items_returns" in df.columns

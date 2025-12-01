@@ -13,6 +13,8 @@ from .config import PipelineConfig, load_config
 from .discovery import run_smart_discovery
 from .profiling import run_smart_profiling
 from .feature_engineering import generate_time_features
+from .stats import basic_stats, prune_low_variance, detect_outliers_iqr, detect_gaps_datetime_index
+from .result import PipelineResult
 from .utils import ensure_dir, maybe_sample_df, setup_logging
 from .validation import run_smart_validation
 
@@ -84,16 +86,28 @@ class PipelineRunner:
             spark_session = spark_sessions[0]
             validation_results = validations[0]
 
+        # Optional pruning before feature eng
+        dropped_cols = []
+        variances = {}
         if cfg.feature_engineering.enabled:
+            if cfg.feature_engineering.get("prune_low_variance", None) is not None:
+                thresh = cfg.feature_engineering["prune_low_variance"]
+                df, dropped_cols, variances = prune_low_variance(df, threshold=thresh)
+
             self.logger.info("Generating time-series features")
             fe_df, feature_catalog = generate_time_features(
                 df, cfg.feature_engineering, target_columns=list(df.select_dtypes(include=["number"]).columns)
             )
             df = df.join(fe_df)
             spark_session.feature_catalog = feature_catalog
-            # capture basic stats after feature generation
-            from .stats import basic_stats
             run_stats["post_features"] = basic_stats(df)
+            run_stats["pruned_low_variance"] = {"dropped": dropped_cols, "variances": variances}
+            # outlier/gap diagnostics
+            if not df.empty and isinstance(df.index, pd.DatetimeIndex):
+                primary_num = df.select_dtypes(include=["number"]).columns[0] if len(df.select_dtypes(include=["number"]).columns) else None
+                if primary_num:
+                    run_stats["outliers"] = detect_outliers_iqr(df[primary_num])
+                run_stats["gaps"] = detect_gaps_datetime_index(df)
 
         if cfg.metadata.persist_context:
             output_dir = ensure_dir(cfg.metadata.output_dir)
@@ -115,7 +129,8 @@ class PipelineRunner:
             out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
             self.logger.info("Wrote run metadata to %s", out_path)
 
-        return df, spark_session, validation_results
+        drift = {}
+        return PipelineResult(df=df, spark_session=spark_session, validation=validation_results, stats=run_stats, drift=drift)
 
 
 def main():

@@ -76,10 +76,9 @@ def run_pipeline_on_dfs(
     con = create_duckdb_with_tables(header_df, line_df, cfg.sources)
 
     runner = PipelineRunner(cfg, logger=logger, connection=con)
-    df, spark_session, validation_results = runner.run()
-
-    context_dict = asdict(spark_session)
-    return df, context_dict, validation_results
+    result = runner.run()
+    context_dict = asdict(result.spark_session)
+    return result.df, context_dict, result.validation
 
 
 def save_results(df: pd.DataFrame, context: Dict[str, Any], validation_results: list, output_dir: str = "logs") -> Path:

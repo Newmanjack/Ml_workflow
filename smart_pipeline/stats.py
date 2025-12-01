@@ -33,3 +33,32 @@ def prune_low_variance(df: pd.DataFrame, threshold: float = 0.0):
     variances = numeric.var()
     drop_cols = [col for col, v in variances.items() if v <= threshold]
     return df.drop(columns=drop_cols), drop_cols, variances.to_dict()
+
+
+def detect_outliers_iqr(series: pd.Series, factor: float = 1.5):
+    if series.empty:
+        return {"low": None, "high": None, "outlier_fraction": 0}
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+    low = q1 - factor * iqr
+    high = q3 + factor * iqr
+    mask = (series < low) | (series > high)
+    return {
+        "low": float(low),
+        "high": float(high),
+        "outlier_fraction": float(mask.mean()),
+    }
+
+
+def detect_gaps_datetime_index(df: pd.DataFrame, freq: str = "D"):
+    if df is None or df.empty or not isinstance(df.index, pd.DatetimeIndex):
+        return {"missing_count": 0, "completeness": 100.0}
+    full_range = pd.date_range(start=df.index.min(), end=df.index.max(), freq=freq)
+    missing = full_range.difference(df.index)
+    completeness = 100 * (1 - len(missing) / len(full_range))
+    return {
+        "missing_count": int(len(missing)),
+        "completeness": float(completeness),
+        "first_missing": missing[0].isoformat() if len(missing) > 0 else None,
+    }
