@@ -22,6 +22,7 @@ class TableConfig(BaseModel):
     header_table: str = "headers"
     line_table: str = "line_items"
     line_tables: list[str] | None = None  # optional multi-line support
+    reduction: Dict[str, Any] | None = None  # optional Spark reduction rules
 
 
 class ColumnOverride(BaseModel):

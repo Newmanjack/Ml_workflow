@@ -50,6 +50,7 @@ class PipelineRunner:
         spark_sessions = []
         validations = []
         feature_catalog = {}
+        run_stats = {}
 
         for lt in self._line_tables():
             self.logger.info("Processing line table: %s", lt)
@@ -90,6 +91,9 @@ class PipelineRunner:
             )
             df = df.join(fe_df)
             spark_session.feature_catalog = feature_catalog
+            # capture basic stats after feature generation
+            from .stats import basic_stats
+            run_stats["post_features"] = basic_stats(df)
 
         if cfg.metadata.persist_context:
             output_dir = ensure_dir(cfg.metadata.output_dir)
@@ -105,6 +109,7 @@ class PipelineRunner:
                     "enabled": cfg.feature_engineering.enabled,
                     "feature_columns": [c for cols in feature_catalog.values() for c in cols],
                 },
+                "stats": run_stats,
             }
             out_path = Path(output_dir) / f"{run_id}.json"
             out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

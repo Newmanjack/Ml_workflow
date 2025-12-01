@@ -51,15 +51,23 @@ def spark_to_pandas(
     return sdf.toPandas()
 
 
-def reduce_spark_df(spark_df, columns=None, filter_expr=None, sample_fraction=None, limit=None):
+def reduce_spark_df(spark_df, columns=None, filter_expr=None, sample_fraction=None, limit=None, pre_agg=None):
     """
     Apply projection/filter/sample/limit to a Spark DataFrame.
+    pre_agg: dict like {"group_by": ["col"], "metrics": {"col": "sum", "col2": "avg"}}
     """
     sdf = spark_df
     if columns:
         sdf = sdf.select(*columns)
     if filter_expr is not None:
         sdf = sdf.filter(filter_expr)
+    if pre_agg:
+        group_by = pre_agg.get("group_by", [])
+        metrics = pre_agg.get("metrics", {})
+        agg_exprs = []
+        for col, func in metrics.items():
+            agg_exprs.append(getattr(__import__("pyspark.sql.functions"), func)(col).alias(f"{func}_{col}"))
+        sdf = sdf.groupBy(*group_by).agg(*agg_exprs)
     if sample_fraction is not None:
         sdf = sdf.sample(fraction=sample_fraction, seed=42)
     if limit is not None:
@@ -117,8 +125,9 @@ def run_pipeline_on_spark(
         fexpr = opts.get("filter")
         sample = opts.get("sample_fraction")
         lim = opts.get("limit")
+        pre_agg = opts.get("pre_agg")
         path = os.path.join(tmpdir, f"{name}.parquet")
-        reduced = reduce_spark_df(sdf, cols, fexpr, sample, lim)
+        reduced = reduce_spark_df(sdf, cols, fexpr, sample, lim, pre_agg)
         reduced.write.mode("overwrite").parquet(path)
         return path
 
