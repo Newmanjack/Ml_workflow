@@ -2,6 +2,27 @@
 
 A modular, config-driven preprocessing layer that discovers schemas, aggregates transactional data in-SQL, validates integrity, and profiles aggregated outputs. Built to be lakehouse/DB friendly (DuckDB by default) and easy to extend.
 
+## Quick start (target + joins)
+```python
+from smart_pipeline import run_pipeline_auto as auto
+
+# df1 = headers (Spark or pandas), df2 = lines (Spark or pandas)
+cfg = {
+    "target": {"column": "Revenue", "auto_detect": True},
+    "feature_engineering": {"enabled": True, "lag_periods": [1, 7], "rolling_windows": [7]},
+}
+overrides = {
+    # join_key supports lists for composite joins
+    "join_key": {"header": ["OrderID", "Company"], "line": ["OrderID", "Company"]},
+    "header": {"date": "OrderDate", "amount": "TotalAmount"},
+    "line": {"date": "LineDate", "amount": "LineAmount"},
+}
+
+result = auto(df1, df2, config_dict=cfg, overrides=overrides)
+print("Target:", result.target_column)
+print(result.df.head())
+```
+
 ## Project Layout
 - `config/base_config.yaml` — sample pipeline configuration
 - `smart_pipeline/` — core package
