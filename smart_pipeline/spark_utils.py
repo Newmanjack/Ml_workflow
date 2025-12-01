@@ -146,7 +146,7 @@ def run_pipeline_on_spark(
 
 
 def _is_spark_df(obj) -> bool:
-    return hasattr(obj, "toPandas") and hasattr(obj, "sql_ctx")
+    return hasattr(obj, "toPandas") and hasattr(obj, "sparkSession")
 
 
 def run_pipeline_auto(

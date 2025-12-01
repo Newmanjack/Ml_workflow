@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Optional
+import decimal
+import pandas as pd
 
 
 def ensure_dir(path: str | Path) -> Path:
@@ -40,3 +42,23 @@ def maybe_sample_df(df, sample_size: Optional[int] = None):
     if len(df) <= sample_size:
         return df
     return df.sample(sample_size, random_state=42)
+
+
+def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Coerce decimal.Decimal/object numerics to float to avoid DuckDB cast issues."""
+    if df is None or df.empty:
+        return df
+
+    def _needs_decimal_to_float(col: pd.Series) -> bool:
+        if not pd.api.types.is_object_dtype(col):
+            return False
+        # Check a small sample for Decimal instances
+        return col.dropna().map(lambda x: isinstance(x, decimal.Decimal)).any()
+
+    out = df.copy()
+    for col in out.columns:
+        series = out[col]
+        if _needs_decimal_to_float(series):
+            out[col] = series.map(lambda x: float(x) if isinstance(x, decimal.Decimal) else x)
+
+    return out

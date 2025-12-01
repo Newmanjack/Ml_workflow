@@ -9,7 +9,7 @@ import pandas as pd
 
 from .config import OverridesConfig, PipelineConfig, TableConfig
 from .runner import PipelineRunner
-from .utils import ensure_dir, setup_logging
+from .utils import ensure_dir, setup_logging, sanitize_dataframe
 
 
 def _merge_overrides(base: OverridesConfig, override_dict: Optional[Dict[str, Dict[str, str]]]) -> OverridesConfig:
@@ -45,6 +45,9 @@ def create_duckdb_with_tables(
     """
     tbl_cfg = tables or TableConfig()
     con = duckdb.connect(database)
+    header_df = sanitize_dataframe(header_df)
+    line_df = sanitize_dataframe(line_df)
+
     con.register("header_df", header_df)
     con.register("line_df", line_df)
     con.execute(f"CREATE TABLE {tbl_cfg.header_table} AS SELECT * FROM header_df")
