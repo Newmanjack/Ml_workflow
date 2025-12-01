@@ -6,7 +6,7 @@ from .discovery import SmartDiscoveryEngine, run_smart_discovery
 from .validation import SmartValidator, run_smart_validation
 from .profiling import run_smart_profiling
 from .feature_engineering import generate_time_features
-from .spark_utils import spark_to_pandas
+from .spark_utils import spark_to_pandas, run_pipeline_on_spark
 from .fabric import (
     build_config,
     create_duckdb_with_tables,
@@ -25,6 +25,7 @@ __all__ = [
     "run_smart_profiling",
     "generate_time_features",
     "spark_to_pandas",
+    "run_pipeline_on_spark",
     "build_config",
     "create_duckdb_with_tables",
     "run_pipeline_on_dfs",

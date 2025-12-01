@@ -116,13 +116,28 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
 
 ## Using with Spark
 - Keep heavy joins/filters/aggregations in Spark; only move reduced data to pandas.
-- Helper: `from smart_pipeline import spark_to_pandas`
+- Helpers:
+  - `spark_to_pandas`: projection/filter/sample/limit + optional Parquet round-trip, then to pandas
+  - `run_pipeline_on_spark`: Spark-first entry that lands reduced Spark DataFrames to Parquet, spins up DuckDB on top, and runs the pipeline end-to-end.
   ```python
-  pdf = spark_to_pandas(
-      spark_df,
-      columns=["OrderID", "OrderDate", "TotalAmount"],
-      limit=100_000,          # or sample_fraction=0.1
-      parquet_path="/tmp/headers.parquet",  # optional: write/read parquet to avoid driver OOM
+  from smart_pipeline import run_pipeline_on_spark
+
+  df, context, validation, artifacts = run_pipeline_on_spark(
+      headers_sdf,
+      lines_sdfs={"line_items": lines_sdf, "line_items_returns": returns_sdf},
+      config_dict={
+          "profiling": {"enabled": False},
+          "feature_engineering": {"enabled": True},
+      },
+      overrides={
+          "join_key": {"header": "OrderID", "line": "OrderID"},
+          "per_line": {"line_items_returns": {"amount": "ReturnAmount"}},
+      },
+      reduction={
+          "headers": {"columns": ["OrderID", "OrderDate", "TotalAmount"], "limit": 200_000},
+          "lines": {"columns": ["OrderID", "LineDate", "LineAmount"], "limit": 1_000_000},
+      },
+      parquet_dir="/tmp/spark_pipeline",  # optional; uses temp dir if omitted
   )
+  # df is aggregated + features; heavy lifting stayed in Spark/DuckDB over Parquet.
   ```
-- Then call `run_pipeline_on_dfs(headers_pdf, lines_pdf, config_dict=..., overrides=...)`.
