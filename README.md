@@ -101,6 +101,7 @@ df, context, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cf
 - In notebooks, pass via `config_dict={"feature_engineering": {"enabled": True}}` when calling `run_pipeline_on_dfs`.
 - Optional pruning: set `feature_engineering.prune_low_variance` to drop constant/low-variance numeric columns before feature gen.
 - After running, you can export results/metadata: `from smart_pipeline import export_pipeline_result; export_pipeline_result(result, output_dir="logs")`.
+- Target column: set `target.column` (or rely on auto-detect over candidate names/numeric columns); available on `PipelineResult.target_column` and in exported metadata.
 
 ## Next steps
 - Wire in real lakehouse/DB connection details via config

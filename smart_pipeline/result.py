@@ -14,6 +14,7 @@ class PipelineResult:
     validation: List[Any]
     stats: Dict[str, Any] = field(default_factory=dict)
     drift: Dict[str, Any] = field(default_factory=dict)
+    target_column: Optional[str] = None
 
     def summary(self) -> Dict[str, Any]:
         return {
@@ -21,6 +22,7 @@ class PipelineResult:
             "columns": list(self.df.columns) if self.df is not None else [],
             "validation": [getattr(v, "status", str(v)) for v in self.validation],
             "drift": self.drift,
+            "target_column": self.target_column,
         }
 
 
@@ -40,6 +42,7 @@ def export_pipeline_result(result: PipelineResult, output_dir: str = "logs", par
         "validation": [getattr(v, "__dict__", str(v)) for v in result.validation],
         "stats": result.stats,
         "drift": result.drift,
+        "target_column": result.target_column,
     }
     meta_path.write_text(json.dumps(meta_payload, indent=2), encoding="utf-8")
     return {"data": df_path, "meta": meta_path}

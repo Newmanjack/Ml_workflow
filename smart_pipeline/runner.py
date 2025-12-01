@@ -136,7 +136,16 @@ class PipelineRunner:
             prior_stats = self._load_latest_stats(cfg.metadata.output_dir, exclude_run_id=run_id)
             drift = self._compute_drift(run_stats.get("post_features", {}), prior_stats, cfg.drift)
 
-        return PipelineResult(df=df, spark_session=spark_session, validation=validation_results, stats=run_stats, drift=drift)
+        target_col = self._select_target(df, cfg.target)
+
+        return PipelineResult(
+            df=df,
+            spark_session=spark_session,
+            validation=validation_results,
+            stats=run_stats,
+            drift=drift,
+            target_column=target_col,
+        )
 
     def _load_latest_stats(self, output_dir: str, exclude_run_id: str):
         paths = sorted(glob.glob(str(Path(output_dir) / "*.json")), reverse=True)
@@ -174,6 +183,22 @@ class PipelineRunner:
             if alerts:
                 drift_report[col] = {"mean_pct": mean_pct, "std_pct": std_pct, "alerts": alerts}
         return drift_report
+
+    def _select_target(self, df, target_cfg):
+        if df is None or df.empty:
+            return None
+        if target_cfg.column and target_cfg.column in df.columns:
+            return target_cfg.column
+        if target_cfg.auto_detect:
+            # Prefer configured candidate list, numeric first
+            numeric_cols = list(df.select_dtypes(include=["number"]).columns)
+            for cand in target_cfg.candidates:
+                for col in df.columns:
+                    if col.lower() == cand.lower():
+                        return col
+            if numeric_cols:
+                return numeric_cols[0]
+        return None
 
 
 def main():

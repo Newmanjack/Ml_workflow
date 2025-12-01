@@ -83,6 +83,13 @@ class DriftConfig(BaseModel):
     distinct_pct_threshold: float = 10.0
 
 
+class TargetConfig(BaseModel):
+    column: Optional[str] = None  # explicit target column in aggregated output
+    table: str = "aggregated"     # placeholder for future multi-table targets
+    auto_detect: bool = True
+    candidates: list[str] = Field(default_factory=lambda: ["target", "label", "y", "totalamount", "amount"])
+
+
 class MetadataConfig(BaseModel):
     output_dir: str = "logs"
     persist_context: bool = True
@@ -99,6 +106,7 @@ class PipelineConfig(BaseModel):
     feature_engineering: FeatureEngineeringConfig = FeatureEngineeringConfig()
     validation: ValidationConfig = ValidationConfig()
     drift: DriftConfig = DriftConfig()
+    target: TargetConfig = TargetConfig()
     metadata: MetadataConfig = MetadataConfig()
 
     @property
