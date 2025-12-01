@@ -143,3 +143,57 @@ def run_pipeline_on_spark(
     df, ctx, validation = runner.run()
 
     return df, ctx, validation, {"tmpdir": tmpdir, "header_path": header_path, "line_paths": line_paths}
+
+
+def _is_spark_df(obj) -> bool:
+    return hasattr(obj, "toPandas") and hasattr(obj, "sql_ctx")
+
+
+def run_pipeline_auto(
+    headers_df,
+    lines_df,
+    config_dict: Optional[dict] = None,
+    overrides: Optional[dict] = None,
+    limit_headers: int = 200_000,
+    limit_lines: int = 1_000_000,
+    sample_fraction: Optional[float] = None,
+    columns_headers: Optional[Sequence[str]] = None,
+    columns_lines: Optional[Sequence[str]] = None,
+):
+    """
+    Convenience entry that:
+      - Detects Spark vs pandas input.
+      - If Spark: reduces (projection/sample/limit), converts to pandas safely.
+      - Runs the pandas-based pipeline via run_pipeline_on_dfs.
+
+    Use this when you just want to hand Spark DFs and get an aggregated pandas result with minimal code.
+    """
+    from .fabric import run_pipeline_on_dfs
+
+    # Spark → pandas reduction
+    if _is_spark_df(headers_df):
+        headers_pdf = spark_to_pandas(
+            headers_df,
+            columns=columns_headers,
+            sample_fraction=sample_fraction,
+            limit=limit_headers,
+        )
+    else:
+        headers_pdf = headers_df
+
+    if _is_spark_df(lines_df):
+        lines_pdf = spark_to_pandas(
+            lines_df,
+            columns=columns_lines,
+            sample_fraction=sample_fraction,
+            limit=limit_lines,
+        )
+    else:
+        lines_pdf = lines_df
+
+    return run_pipeline_on_dfs(
+        header_df=headers_pdf,
+        line_df=lines_pdf,
+        config_dict=config_dict,
+        overrides=overrides,
+    )

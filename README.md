@@ -119,25 +119,20 @@ df, ctx, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cfg)
 - Helpers:
   - `spark_to_pandas`: projection/filter/sample/limit + optional Parquet round-trip, then to pandas
   - `run_pipeline_on_spark`: Spark-first entry that lands reduced Spark DataFrames to Parquet, spins up DuckDB on top, and runs the pipeline end-to-end.
+   - `run_pipeline_auto`: minimal entry point; detects Spark vs pandas, reduces (limit/sample) if Spark, then runs the pipeline.
   ```python
-  from smart_pipeline import run_pipeline_on_spark
-
-  df, context, validation, artifacts = run_pipeline_on_spark(
-      headers_sdf,
-      lines_sdfs={"line_items": lines_sdf, "line_items_returns": returns_sdf},
-      config_dict={
-          "profiling": {"enabled": False},
-          "feature_engineering": {"enabled": True},
-      },
-      overrides={
-          "join_key": {"header": "OrderID", "line": "OrderID"},
-          "per_line": {"line_items_returns": {"amount": "ReturnAmount"}},
-      },
-      reduction={
-          "headers": {"columns": ["OrderID", "OrderDate", "TotalAmount"], "limit": 200_000},
-          "lines": {"columns": ["OrderID", "LineDate", "LineAmount"], "limit": 1_000_000},
-      },
-      parquet_dir="/tmp/spark_pipeline",  # optional; uses temp dir if omitted
+  # Simplest Spark path (auto-reduce, then pipeline)
+  from smart_pipeline import run_pipeline_auto
+  df, context, validation = run_pipeline_auto(
+      headers_df=headers_spark_df,
+      lines_df=lines_spark_df,
+      config_dict={"profiling": {"enabled": False}, "feature_engineering": {"enabled": True}},
+      overrides=None,              # let discovery auto-pick first
+      limit_headers=200_000,
+      limit_lines=1_000_000,
+      sample_fraction=None,        # set e.g. 0.1 to sample
+      columns_headers=None,        # or pass a projection list
+      columns_lines=None,
   )
-  # df is aggregated + features; heavy lifting stayed in Spark/DuckDB over Parquet.
+  # df is aggregated (and features if enabled); heavy lifting stayed in Spark reduction.
   ```
