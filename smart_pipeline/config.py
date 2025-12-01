@@ -67,6 +67,7 @@ class FeatureEngineeringConfig(BaseModel):
     pct_change_windows: list[int] = Field(default_factory=lambda: [7])
     add_date_parts: bool = True
     drop_na: bool = False  # keep NaNs from lags by default
+    prune_low_variance: float | None = None  # drop numeric columns with variance <= threshold
 
 
 class ValidationConfig(BaseModel):

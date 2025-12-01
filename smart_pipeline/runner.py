@@ -90,8 +90,8 @@ class PipelineRunner:
         dropped_cols = []
         variances = {}
         if cfg.feature_engineering.enabled:
-            if cfg.feature_engineering.get("prune_low_variance", None) is not None:
-                thresh = cfg.feature_engineering["prune_low_variance"]
+            if cfg.feature_engineering.prune_low_variance is not None:
+                thresh = cfg.feature_engineering.prune_low_variance
                 df, dropped_cols, variances = prune_low_variance(df, threshold=thresh)
 
             self.logger.info("Generating time-series features")

@@ -8,6 +8,7 @@ from .profiling import run_smart_profiling
 from .feature_engineering import generate_time_features
 from .spark_utils import spark_to_pandas, run_pipeline_on_spark, run_pipeline_auto
 from .stats import prune_low_variance, basic_stats
+from .result import PipelineResult, export_pipeline_result
 from .fabric import (
     build_config,
     create_duckdb_with_tables,
@@ -30,6 +31,8 @@ __all__ = [
     "run_pipeline_auto",
     "prune_low_variance",
     "basic_stats",
+    "PipelineResult",
+    "export_pipeline_result",
     "build_config",
     "create_duckdb_with_tables",
     "run_pipeline_on_dfs",

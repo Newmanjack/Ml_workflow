@@ -99,6 +99,8 @@ df, context, validation = run_pipeline_on_dfs(header_df, line_df, config_dict=cf
 - Defaults: lags `[1,7,28]`, rolling windows `[7,28]`, pct-change `[7]`, date parts (dow/week/month/quarter/start/end flags)
 - Features are generated on all numeric aggregated columns and appended to the returned dataframe; catalog is stored in the run metadata.
 - In notebooks, pass via `config_dict={"feature_engineering": {"enabled": True}}` when calling `run_pipeline_on_dfs`.
+- Optional pruning: set `feature_engineering.prune_low_variance` to drop constant/low-variance numeric columns before feature gen.
+- After running, you can export results/metadata: `from smart_pipeline import export_pipeline_result; export_pipeline_result(result, output_dir="logs")`.
 
 ## Next steps
 - Wire in real lakehouse/DB connection details via config
