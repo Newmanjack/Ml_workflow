@@ -211,6 +211,37 @@ model, test_df, metrics = train_spark_model(
 print(metrics)
 ```
 
+### Spark-only multi-table ML pipeline (scales to many tables)
+```python
+from smart_pipeline import run_full_spark_ml_pipeline, PipelineConfig, TableSourceConfig, ModelConfig
+
+cfg = PipelineConfig(
+    selected_tables=["orders", "line_items", "customers", "payments", "shipments"],  # add as many as needed
+    table_source=TableSourceConfig(source_type="catalog"),  # or parquet/jdbc with base_path/jdbc_url
+    join_config={
+        "orders": {"join_key": "order_id"},
+        "line_items": {"join_key": "order_id"},
+        "payments": {"join_key": "order_id"},
+        "customers": {"join_key": "customer_id"},
+        "shipments": {"join_key": "order_id"},
+    },
+    feature_columns=None,  # auto-detect numerics + encoded categoricals across joined tables
+    label={"table": "orders", "column": "Revenue"},
+    model=ModelConfig(
+        problem_type="regression",
+        model_type="random_forest",
+        label_column="Revenue",
+        apply_scaling=False,
+        train_fraction=0.8,
+        metrics=["rmse", "mae"],
+    ),
+    output_path="ml_pipeline_spark",
+)
+
+model, meta = run_full_spark_ml_pipeline(spark, cfg)
+print(meta)  # metrics + config + features used
+```
+
 ## Next steps
 - Wire in real lakehouse/DB connection details via config
 - Extend validation with business rules or additional anomaly checks
