@@ -1,6 +1,9 @@
 """Smart ML preprocessing pipeline package."""
 
-from .runner import PipelineRunner
+import logging
+
+logger = logging.getLogger("smart_pipeline")
+
 from .config import PipelineConfig, load_config
 from .discovery import SmartDiscoveryEngine, run_smart_discovery
 from .validation import SmartValidator, run_smart_validation
@@ -17,12 +20,25 @@ from .pyspark_ml import (
     TableSourceConfig,
     ModelConfig,
 )
-from .fabric import (
-    build_config,
-    create_duckdb_with_tables,
-    run_pipeline_on_dfs,
-    save_results,
-)
+
+# DuckDB/pandas helpers are optional; guard import so Spark-only envs can still import the package.
+try:
+    from .runner import PipelineRunner
+    from .fabric import (
+        build_config,
+        create_duckdb_with_tables,
+        run_pipeline_on_dfs,
+        save_results,
+    )
+    _DUCKDB_AVAILABLE = True
+except Exception as exc:  # pragma: no cover - optional dependency path
+    PipelineRunner = None
+    build_config = create_duckdb_with_tables = run_pipeline_on_dfs = save_results = None
+    _DUCKDB_AVAILABLE = False
+    logger.warning(
+        "DuckDB-related helpers not available (missing dependency?): %s. Spark APIs remain usable.",
+        exc,
+    )
 
 __all__ = [
     "PipelineRunner",

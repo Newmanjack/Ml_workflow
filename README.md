@@ -6,6 +6,7 @@ A modular, config-driven preprocessing layer that discovers schemas, aggregates 
 %pip install --upgrade --no-cache-dir "smart-pipeline-preprocessing[spark]@ git+https://github.com/Newmanjack/Ml_workflow.git"
 # Private repo: %pip install --upgrade --no-cache-dir "smart-pipeline-preprocessing[spark]@ git+https://${GH_TOKEN}@github.com/Newmanjack/Ml_workflow.git"
 ```
+If you need the legacy DuckDB/pandas helpers, also install `duckdb` (included in the base requirements). Spark-only users can ignore DuckDB imports; the package will still load.
 
 ### Install (Spark)
 ```python
