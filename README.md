@@ -1,6 +1,21 @@
 # Smart ML Preprocessing Pipeline
 
 A modular, config-driven preprocessing layer that discovers schemas, aggregates transactional data in-SQL, validates integrity, and profiles aggregated outputs. Built to be lakehouse/DB friendly (DuckDB by default) and easy to extend.
+## Table of Contents
+- [Quick start (target + joins)](#quick-start-target--joins)
+- [Project Layout](#project-layout)
+- [Setup](#setup)
+- [Running the pipeline](#running-the-pipeline)
+- [Fabric / notebook-friendly usage](#fabric--notebook-friendly-usage)
+- [Multiple line tables](#multiple-line-tables-eg-orders--returns--adjustments)
+- [Automatic feature engineering](#automatic-feature-engineering-lagsrollingpct-change--date-parts)
+- [Column policies](#column-policies-typenullcardinality-to-clean-inputs)
+- [Export aggregated data + metadata](#export-aggregated-data--metadata)
+- [Spark-only multi-table ML pipeline](#spark-only-multi-table-ml-pipeline-scales-to-many-tables)
+- [Spark ML models](#spark-ml-models)
+- [Installation](#installation-gitpip)
+
+
 
 ## Quick start (target + joins)
 ```python
