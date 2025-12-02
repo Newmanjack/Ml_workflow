@@ -99,6 +99,23 @@ def join_tables(dfs: Dict[str, object], join_config: Optional[Dict[str, Dict[str
     return joined
 
 
+def suggest_joins(dfs: Dict[str, object]) -> Dict[Tuple[str, str], List[str]]:
+    """
+    Suggest join keys between all pairs of tables based on common column names.
+    Returns a mapping: (tableA, tableB) -> [candidate_cols]
+    """
+    suggestions = {}
+    tables = list(dfs.keys())
+    for i, a in enumerate(tables):
+        for b in tables[i + 1 :]:
+            common = set(dfs[a].columns) & set(dfs[b].columns)
+            id_like = [c for c in common if c.lower().endswith("id")]
+            candidates = id_like if id_like else list(common)
+            if candidates:
+                suggestions[(a, b)] = candidates
+    return suggestions
+
+
 def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     exclude = exclude or []
     numeric_types = {"int", "bigint", "double", "float", "long", "decimal", "smallint", "tinyint"}
