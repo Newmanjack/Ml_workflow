@@ -10,7 +10,13 @@ from .spark_utils import spark_to_pandas, run_pipeline_on_spark, run_pipeline_au
 from .stats import prune_low_variance, basic_stats
 from .result import PipelineResult, export_pipeline_result
 from .modeling import train_spark_model, prepare_spark_features
-from .pyspark_ml import run_full_spark_ml_pipeline, load_pipeline, suggest_joins
+from .pyspark_ml import (
+    run_full_spark_ml_pipeline,
+    load_pipeline,
+    suggest_joins,
+    TableSourceConfig,
+    ModelConfig,
+)
 from .fabric import (
     build_config,
     create_duckdb_with_tables,
@@ -40,6 +46,8 @@ __all__ = [
     "run_full_spark_ml_pipeline",
     "load_pipeline",
     "suggest_joins",
+    "TableSourceConfig",
+    "ModelConfig",
     "build_config",
     "create_duckdb_with_tables",
     "run_pipeline_on_dfs",
