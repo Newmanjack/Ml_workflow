@@ -2,6 +2,12 @@
 
 A modular, config-driven preprocessing layer that discovers schemas, aggregates transactional data in-SQL, validates integrity, and profiles aggregated outputs. Built to be lakehouse/DB friendly (DuckDB by default) and easy to extend.
 
+
+### Install (Spark)
+```python
+%pip install "smart-pipeline-preprocessing[spark]@ git+https://github.com/Newmanjack/Ml_workflow.git"
+# Private repo: %pip install "smart-pipeline-preprocessing[spark]@ git+https://${GH_TOKEN}@github.com/Newmanjack/Ml_workflow.git"
+```
 > Spark-first: For large datasets, use the Spark APIs (`run_full_spark_ml_pipeline`, `train_spark_model`, `run_pipeline_auto` with Spark DataFrames). The pandas/DuckDB helpers remain available but are secondary for small workloads or legacy use.
 ## Table of Contents
 - [Quick start (target + joins)](#quick-start-target--joins)

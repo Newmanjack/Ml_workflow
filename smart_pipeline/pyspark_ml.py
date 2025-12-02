@@ -60,12 +60,22 @@ class ModelConfig:
 @dataclass
 class PipelineConfig:
     selected_tables: List[str]
-    table_source: TableSourceConfig
+    table_source: TableSourceConfig = None
     join_config: Optional[Dict[str, Dict[str, str]]] = None  # table -> {"join_key": "..."}
     feature_columns: Optional[Dict[str, List[str]]] = None  # table -> cols
-    label: Dict[str, str] = None  # {"table": "...", "column": "..."}
-    model: ModelConfig = ModelConfig()
+    label: Optional[Dict[str, str]] = None  # {"table": "...", "column": "..."}
+    model: ModelConfig = None
     output_path: str = "ml_pipeline"
+
+    def __post_init__(self):
+        if self.table_source is None:
+            self.table_source = TableSourceConfig()
+        if self.model is None:
+            self.model = ModelConfig()
+        if self.label is None:
+            raise ValueError("label must be provided: {'table': '...', 'column': '...'}")
+        if not isinstance(self.model, ModelConfig):
+            raise ValueError("model must be a ModelConfig instance")
 
 
 def load_table(spark, table_name: str, source_cfg: TableSourceConfig):
@@ -150,8 +160,8 @@ def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[
 
 def build_preprocess_pipeline(df, model_cfg: ModelConfig, feature_cols: Optional[List[str]] = None):
     _require_pyspark()
-from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, StandardScaler, PolynomialExpansion
-from pyspark.ml import Pipeline
+    from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, StandardScaler, PolynomialExpansion
+    from pyspark.ml import Pipeline
     logger = logging.getLogger("smart_pipeline.pyspark_ml")
 
     label_col = model_cfg.label_column
