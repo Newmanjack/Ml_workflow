@@ -34,7 +34,7 @@ class ModelConfig:
     feature_columns: Optional[List[str]] = None  # if None, auto-detect numerics + encoded categoricals
     label_column: str = "label"
     problem_type: str = "regression"  # or classification
-    model_type: str = "linear_regression"  # linear_regression | logistic_regression | random_forest | gbt
+    model_type: str = "linear_regression"  # linear_regression | logistic_regression | random_forest | gbt | decision_tree | svm
     apply_scaling: bool = True
     train_fraction: float = 0.8
     random_seed: int = 42
@@ -47,6 +47,9 @@ class ModelConfig:
     max_depth: int = 8
     num_trees: int = 200
     step_size: float = 0.1
+    # SVM (linear SVC) / soft margin
+    svm_reg_param: float = 0.0
+    svm_max_iter: int = 100
 
 
 @dataclass
@@ -189,6 +192,7 @@ def _get_estimator(model_cfg: ModelConfig, feature_col: str = "features"):
     from pyspark.ml.classification import LogisticRegression, RandomForestClassifier, GBTClassifier
     from pyspark.ml.classification import DecisionTreeClassifier
     from pyspark.ml.regression import DecisionTreeRegressor
+    from pyspark.ml.classification import LinearSVC
     logger = logging.getLogger("smart_pipeline.pyspark_ml")
 
     mt = model_cfg.model_type
@@ -219,6 +223,15 @@ def _get_estimator(model_cfg: ModelConfig, feature_col: str = "features"):
                 maxDepth=model_cfg.max_depth,
                 maxIter=model_cfg.max_iter,
                 stepSize=model_cfg.step_size,
+            )
+        if mt == "svm":
+            if not model_cfg.apply_scaling:
+                logger.warning("SVM/LinearSVC without scaling may perform poorly when features differ in scale.")
+            return LinearSVC(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                maxIter=model_cfg.svm_max_iter,
+                regParam=model_cfg.svm_reg_param,
             )
         raise ValueError(f"Unsupported classification model_type: {mt}")
     else:
