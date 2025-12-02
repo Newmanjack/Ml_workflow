@@ -193,6 +193,24 @@ paths = export_pipeline_result(result, output_dir="logs")
 print(paths)
 ```
 
+### (Optional) Train a simple Spark ML model on the aggregated output
+```python
+from smart_pipeline import train_spark_model
+# Assume you have the aggregated pandas df from result; to stay in Spark, load it to Spark:
+# sdf = spark.createDataFrame(result.df.reset_index())
+
+model, test_df, metrics = train_spark_model(
+    sdf,                     # Spark DataFrame
+    target_col=result.target_column or "TotalAmount",
+    feature_cols=None,       # auto-select numeric features
+    model_type="regression", # or "classification"
+    test_fraction=0.2,
+    handle_missing="zero",
+    scale=False,
+)
+print(metrics)
+```
+
 ## Next steps
 - Wire in real lakehouse/DB connection details via config
 - Extend validation with business rules or additional anomaly checks

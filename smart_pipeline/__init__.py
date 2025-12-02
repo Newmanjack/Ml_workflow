@@ -9,6 +9,7 @@ from .feature_engineering import generate_time_features
 from .spark_utils import spark_to_pandas, run_pipeline_on_spark, run_pipeline_auto
 from .stats import prune_low_variance, basic_stats
 from .result import PipelineResult, export_pipeline_result
+from .modeling import train_spark_model, prepare_spark_features
 from .fabric import (
     build_config,
     create_duckdb_with_tables,
@@ -33,6 +34,8 @@ __all__ = [
     "basic_stats",
     "PipelineResult",
     "export_pipeline_result",
+    "train_spark_model",
+    "prepare_spark_features",
     "build_config",
     "create_duckdb_with_tables",
     "run_pipeline_on_dfs",
