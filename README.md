@@ -2,6 +2,10 @@
 
 A modular, config-driven preprocessing layer that discovers schemas, aggregates transactional data in-SQL, validates integrity, and profiles aggregated outputs. Built to be lakehouse/DB friendly (DuckDB by default) and easy to extend.
 
+```python
+%pip install --upgrade --no-cache-dir "smart-pipeline-preprocessing[spark]@ git+https://github.com/Newmanjack/Ml_workflow.git"
+# Private repo: %pip install --upgrade --no-cache-dir "smart-pipeline-preprocessing[spark]@ git+https://${GH_TOKEN}@github.com/Newmanjack/Ml_workflow.git"
+```
 
 ### Install (Spark)
 ```python
