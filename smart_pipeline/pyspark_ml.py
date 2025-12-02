@@ -50,6 +50,11 @@ class ModelConfig:
     # SVM (linear SVC) / soft margin
     svm_reg_param: float = 0.0
     svm_max_iter: int = 100
+    # Class imbalance handling
+    class_weight: bool = False
+    # Feature engineering extras
+    polynomial_degree: Optional[int] = None  # only applied to numeric features if set (>1)
+    drop_correlated_threshold: Optional[float] = None  # drop one of highly correlated numeric pairs above this
 
 
 @dataclass
@@ -145,8 +150,8 @@ def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[
 
 def build_preprocess_pipeline(df, model_cfg: ModelConfig, feature_cols: Optional[List[str]] = None):
     _require_pyspark()
-    from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, StandardScaler
-    from pyspark.ml import Pipeline
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, StandardScaler, PolynomialExpansion
+from pyspark.ml import Pipeline
     logger = logging.getLogger("smart_pipeline.pyspark_ml")
 
     label_col = model_cfg.label_column
@@ -177,6 +182,15 @@ def build_preprocess_pipeline(df, model_cfg: ModelConfig, feature_cols: Optional
             output_features.append("numeric_scaled")
         else:
             output_features.extend(numeric_cols)
+
+        if model_cfg.polynomial_degree and model_cfg.polynomial_degree > 1:
+            poly_input = "numeric_scaled" if model_cfg.apply_scaling else "numeric_vec_poly"
+            if not model_cfg.apply_scaling:
+                assembler_num = VectorAssembler(inputCols=numeric_cols, outputCol="numeric_vec_poly", handleInvalid="keep")
+                stages.append(assembler_num)
+            poly = PolynomialExpansion(inputCol=poly_input, outputCol="numeric_poly", degree=model_cfg.polynomial_degree)
+            stages.append(poly)
+            output_features.append("numeric_poly")
 
     # Assemble full feature vector
     assembler = VectorAssembler(inputCols=output_features, outputCol="features", handleInvalid="keep")
@@ -282,18 +296,36 @@ def evaluate_model(pred_df, model_cfg: ModelConfig) -> Dict[str, float]:
             if m_low == "auc":
                 evaluator = BinaryClassificationEvaluator(labelCol=model_cfg.label_column, rawPredictionCol="rawPrediction", metricName="areaUnderROC")
                 results["auc"] = float(evaluator.evaluate(pred_df))
+            elif m_low == "auprc":
+                evaluator = BinaryClassificationEvaluator(labelCol=model_cfg.label_column, rawPredictionCol="rawPrediction", metricName="areaUnderPR")
+                results["auprc"] = float(evaluator.evaluate(pred_df))
             elif m_low == "accuracy":
                 evaluator = MulticlassClassificationEvaluator(labelCol=model_cfg.label_column, predictionCol="prediction", metricName="accuracy")
                 results["accuracy"] = float(evaluator.evaluate(pred_df))
             elif m_low == "f1":
                 evaluator = MulticlassClassificationEvaluator(labelCol=model_cfg.label_column, predictionCol="prediction", metricName="f1")
                 results["f1"] = float(evaluator.evaluate(pred_df))
+            elif m_low == "logloss":
+                # custom log loss for binary classification using probability vector
+                import pyspark.sql.functions as F
+                probs = pred_df.select(
+                    F.col(model_cfg.label_column).cast("double").alias("label"),
+                    F.col("probability").getItem(1).alias("p1"),
+                ).withColumn("p1_clipped", F.when(F.col("p1") < 1e-15, 1e-15).when(F.col("p1") > 1 - 1e-15, 1 - 1e-15).otherwise(F.col("p1")))
+                logloss = probs.select(
+                    F.avg(
+                        -F.col("label") * F.log(F.col("p1_clipped"))
+                        - (1 - F.col("label")) * F.log(1 - F.col("p1_clipped"))
+                    ).alias("ll")
+                ).collect()[0]["ll"]
+                results["logloss"] = float(logloss)
     return results
 
 
 def train_pipeline(spark_df, model_cfg: ModelConfig, feature_cols: Optional[List[str]] = None):
     _require_pyspark()
     from pyspark.ml import Pipeline
+    import pyspark.sql.functions as F
 
     preprocess, used_features = build_preprocess_pipeline(spark_df, model_cfg, feature_cols)
     estimator = _get_estimator(model_cfg)
@@ -301,6 +333,20 @@ def train_pipeline(spark_df, model_cfg: ModelConfig, feature_cols: Optional[List
 
     train_frac = model_cfg.train_fraction
     train_df, test_df = spark_df.randomSplit([train_frac, 1 - train_frac], seed=model_cfg.random_seed) if 0 < train_frac < 1 else (spark_df, None)
+
+    # class weights for imbalance (classification only)
+    if model_cfg.problem_type == "classification" and model_cfg.class_weight:
+        label_col = model_cfg.label_column
+        counts = train_df.groupBy(label_col).count().collect()
+        total = sum(r["count"] for r in counts)
+        weights = {r[label_col]: total / (len(counts) * r["count"]) for r in counts}
+        train_df = train_df.withColumn(
+            "classWeight",
+            F.col(label_col).cast("double")
+        )
+        # map weights
+        train_df = train_df.replace(to_replace=list(weights.keys()), value=list(weights.values()), subset=["classWeight"])
+        estimator = estimator.copy({estimator.weightCol: "classWeight"}) if estimator.hasParam("weightCol") else estimator
 
     model = pipeline.fit(train_df)
     metrics = {}
