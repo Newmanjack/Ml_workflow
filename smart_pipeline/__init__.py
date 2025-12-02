@@ -20,7 +20,14 @@ from .pyspark_ml import (
 )
 
 # DuckDB/pandas helpers are optional; guard import so Spark-only envs can still import the package.
+PipelineRunner = None
+SmartValidator = None
+run_smart_validation = None
+run_smart_profiling = None
+build_config = create_duckdb_with_tables = run_pipeline_on_dfs = save_results = None
+_DUCKDB_AVAILABLE = False
 try:
+    import duckdb  # noqa: F401
     from .runner import PipelineRunner
     from .validation import SmartValidator, run_smart_validation
     from .profiling import run_smart_profiling
@@ -32,10 +39,6 @@ try:
     )
     _DUCKDB_AVAILABLE = True
 except Exception as exc:  # pragma: no cover - optional dependency path
-    PipelineRunner = None
-    SmartValidator = run_smart_validation = run_smart_profiling = None
-    build_config = create_duckdb_with_tables = run_pipeline_on_dfs = save_results = None
-    _DUCKDB_AVAILABLE = False
     logger.warning(
         "DuckDB-related helpers not available (missing dependency?): %s. Spark APIs remain usable.",
         exc,
@@ -65,8 +68,14 @@ __all__ = [
     "suggest_joins",
     "TableSourceConfig",
     "ModelConfig",
-    "build_config",
-    "create_duckdb_with_tables",
-    "run_pipeline_on_dfs",
-    "save_results",
 ]
+
+if _DUCKDB_AVAILABLE:
+    __all__.extend(
+        [
+            "build_config",
+            "create_duckdb_with_tables",
+            "run_pipeline_on_dfs",
+            "save_results",
+        ]
+    )
