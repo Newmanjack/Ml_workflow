@@ -9,6 +9,7 @@ and persists the full pipeline + metadata for reproducibility.
 """
 
 import json
+import logging
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Tuple
 
@@ -38,6 +39,14 @@ class ModelConfig:
     train_fraction: float = 0.8
     random_seed: int = 42
     metrics: Optional[List[str]] = None  # e.g., ["rmse","mae"] or ["auc","accuracy"]
+    # Regularization / iterations for linear/logistic
+    reg_param: float = 0.01
+    elastic_net_param: float = 0.0  # 0=L2, 1=L1
+    max_iter: int = 100
+    # Tree/GBM params
+    max_depth: int = 8
+    num_trees: int = 200
+    step_size: float = 0.1
 
 
 @dataclass
@@ -135,6 +144,7 @@ def build_preprocess_pipeline(df, model_cfg: ModelConfig, feature_cols: Optional
     _require_pyspark()
     from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler, StandardScaler
     from pyspark.ml import Pipeline
+    logger = logging.getLogger("smart_pipeline.pyspark_ml")
 
     label_col = model_cfg.label_column
     exclude = [label_col]
@@ -177,23 +187,68 @@ def _get_estimator(model_cfg: ModelConfig, feature_col: str = "features"):
     _require_pyspark()
     from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRegressor
     from pyspark.ml.classification import LogisticRegression, RandomForestClassifier, GBTClassifier
+    from pyspark.ml.classification import DecisionTreeClassifier
+    from pyspark.ml.regression import DecisionTreeRegressor
+    logger = logging.getLogger("smart_pipeline.pyspark_ml")
 
     mt = model_cfg.model_type
     if model_cfg.problem_type == "classification":
         if mt == "logistic_regression":
-            return LogisticRegression(featuresCol=feature_col, labelCol=model_cfg.label_column, maxIter=50, regParam=0.01)
+            if not model_cfg.apply_scaling:
+                logger.warning("Logistic regression without scaling may underperform when features differ in scale.")
+            return LogisticRegression(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                maxIter=model_cfg.max_iter,
+                regParam=model_cfg.reg_param,
+                elasticNetParam=model_cfg.elastic_net_param,
+            )
+        if mt == "decision_tree":
+            return DecisionTreeClassifier(featuresCol=feature_col, labelCol=model_cfg.label_column, maxDepth=model_cfg.max_depth)
         if mt == "random_forest":
-            return RandomForestClassifier(featuresCol=feature_col, labelCol=model_cfg.label_column, numTrees=100, maxDepth=10)
+            return RandomForestClassifier(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                numTrees=model_cfg.num_trees,
+                maxDepth=model_cfg.max_depth,
+            )
         if mt == "gbt":
-            return GBTClassifier(featuresCol=feature_col, labelCol=model_cfg.label_column, maxDepth=5, maxIter=50)
+            return GBTClassifier(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                maxDepth=model_cfg.max_depth,
+                maxIter=model_cfg.max_iter,
+                stepSize=model_cfg.step_size,
+            )
         raise ValueError(f"Unsupported classification model_type: {mt}")
     else:
         if mt == "linear_regression":
-            return LinearRegression(featuresCol=feature_col, labelCol=model_cfg.label_column, regParam=0.01, elasticNetParam=0.0)
+            if not model_cfg.apply_scaling:
+                logger.warning("Linear regression without scaling may underperform when features differ in scale.")
+            return LinearRegression(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                regParam=model_cfg.reg_param,
+                elasticNetParam=model_cfg.elastic_net_param,
+                maxIter=model_cfg.max_iter,
+            )
+        if mt == "decision_tree":
+            return DecisionTreeRegressor(featuresCol=feature_col, labelCol=model_cfg.label_column, maxDepth=model_cfg.max_depth)
         if mt == "random_forest":
-            return RandomForestRegressor(featuresCol=feature_col, labelCol=model_cfg.label_column, numTrees=200, maxDepth=12)
+            return RandomForestRegressor(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                numTrees=model_cfg.num_trees,
+                maxDepth=model_cfg.max_depth,
+            )
         if mt == "gbt":
-            return GBTRegressor(featuresCol=feature_col, labelCol=model_cfg.label_column, maxDepth=5, maxIter=100)
+            return GBTRegressor(
+                featuresCol=feature_col,
+                labelCol=model_cfg.label_column,
+                maxDepth=model_cfg.max_depth,
+                maxIter=model_cfg.max_iter,
+                stepSize=model_cfg.step_size,
+            )
         raise ValueError(f"Unsupported regression model_type: {mt}")
 
 
