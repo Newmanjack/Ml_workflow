@@ -5,16 +5,17 @@ A modular, config-driven preprocessing layer that discovers schemas, aggregates 
 > Spark-first: For large datasets, use the Spark APIs (`run_full_spark_ml_pipeline`, `train_spark_model`, `run_pipeline_auto` with Spark DataFrames). The pandas/DuckDB helpers remain available but are secondary for small workloads or legacy use.
 ## Table of Contents
 - [Quick start (target + joins)](#quick-start-target--joins)
+- [Spark-first workflow & auto-join](#spark-first-workflow--auto-join)
+- [Spark-only multi-table ML pipeline](#spark-only-multi-table-ml-pipeline-scales-to-many-tables)
+- [Spark ML models](#spark-ml-models)
 - [Project Layout](#project-layout)
 - [Setup](#setup)
 - [Running the pipeline](#running-the-pipeline)
-- [Fabric / notebook-friendly usage](#fabric--notebook-friendly-usage)
+- [Legacy pandas/DuckDB usage (optional)](#legacy-pandasduckdb-usage-optional)
 - [Multiple line tables](#multiple-line-tables-eg-orders--returns--adjustments)
 - [Automatic feature engineering](#automatic-feature-engineering-lagsrollingpct-change--date-parts)
 - [Column policies](#column-policies-typenullcardinality-to-clean-inputs)
 - [Export aggregated data + metadata](#export-aggregated-data--metadata)
-- [Spark-only multi-table ML pipeline](#spark-only-multi-table-ml-pipeline-scales-to-many-tables)
-- [Spark ML models](#spark-ml-models)
 - [Installation](#installation-gitpip)
 
 
@@ -38,6 +39,45 @@ overrides = {
 result = auto(df1, df2, config_dict=cfg, overrides=overrides)
 print("Target:", result.target_column)
 print(result.df.head())
+```
+
+## Spark-first workflow & auto-join
+```python
+from smart_pipeline import suggest_joins, run_full_spark_ml_pipeline, PipelineConfig, TableSourceConfig, ModelConfig
+
+# 1) Inspect suggested joins across many Spark tables
+tables = ["orders", "line_items", "customers", "payments"]
+dfs = {t: spark.read.table(t) for t in tables}
+print(suggest_joins(dfs))  # {(orders, line_items): ['order_id'], ...}
+
+# 2) Configure join keys (use suggestions or set explicitly)
+join_cfg = {
+    "orders": {"join_key": "order_id"},
+    "line_items": {"join_key": "order_id"},
+    "customers": {"join_key": "customer_id"},
+    "payments": {"join_key": "order_id"},
+}
+
+# 3) Train Spark ML pipeline end-to-end (no pandas)
+cfg = PipelineConfig(
+    selected_tables=tables,
+    table_source=TableSourceConfig(source_type="catalog"),  # or parquet/jdbc
+    join_config=join_cfg,
+    feature_columns=None,  # auto-detect numerics + encoded categoricals
+    label={"table": "orders", "column": "Revenue"},
+    model=ModelConfig(
+        problem_type="regression",
+        model_type="random_forest",
+        label_column="Revenue",
+        apply_scaling=False,
+        train_fraction=0.8,
+        metrics=["rmse", "mae", "r2"],
+    ),
+    output_path="ml_pipeline_spark",
+)
+
+model, meta = run_full_spark_ml_pipeline(spark, cfg)
+print(meta)
 ```
 
 ## Project Layout
@@ -85,7 +125,7 @@ pytest
 ```
 Synthetic DuckDB tables cover discovery correctness, join analysis, and reconciliation (including a deliberate mismatch).
 
-## Fabric / notebook-friendly usage
+## Legacy pandas/DuckDB usage (optional)
 You can drop the `smart_pipeline` folder into a notebook environment and run end-to-end without YAML:
 
 ```python
