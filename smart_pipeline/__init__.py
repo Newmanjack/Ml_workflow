@@ -6,8 +6,6 @@ logger = logging.getLogger("smart_pipeline")
 
 from .config import PipelineConfig, load_config
 from .discovery import SmartDiscoveryEngine, run_smart_discovery
-from .validation import SmartValidator, run_smart_validation
-from .profiling import run_smart_profiling
 from .feature_engineering import generate_time_features
 from .spark_utils import spark_to_pandas, run_pipeline_on_spark, run_pipeline_auto
 from .stats import prune_low_variance, basic_stats
@@ -24,6 +22,8 @@ from .pyspark_ml import (
 # DuckDB/pandas helpers are optional; guard import so Spark-only envs can still import the package.
 try:
     from .runner import PipelineRunner
+    from .validation import SmartValidator, run_smart_validation
+    from .profiling import run_smart_profiling
     from .fabric import (
         build_config,
         create_duckdb_with_tables,
@@ -33,6 +33,7 @@ try:
     _DUCKDB_AVAILABLE = True
 except Exception as exc:  # pragma: no cover - optional dependency path
     PipelineRunner = None
+    SmartValidator = run_smart_validation = run_smart_profiling = None
     build_config = create_duckdb_with_tables = run_pipeline_on_dfs = save_results = None
     _DUCKDB_AVAILABLE = False
     logger.warning(
