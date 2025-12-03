@@ -199,6 +199,34 @@ def plan_joins(
     return {"joinable": suggestions, "unjoinable": unjoinable}
 
 
+def join_tables_with_plan(
+    dfs: Dict[str, object],
+    join_plan: Dict[Tuple[str, str], List[str]],
+    base_table: Optional[str] = None,
+    how: str = "inner",
+):
+    """
+    Join a dict of Spark DataFrames using a provided join_plan (from plan_joins/suggest_joins).
+    Returns the joined Spark DataFrame.
+    """
+    tables = list(dfs.keys())
+    base = base_table or tables[0]
+    joined = dfs[base]
+    for tbl in tables:
+        if tbl == base:
+            continue
+        key = (base, tbl) if (base, tbl) in join_plan else (tbl, base)
+        if key not in join_plan:
+            continue
+        cols = join_plan[key]
+        if len(cols) == 1:
+            lk = rk = cols[0]
+        else:
+            lk, rk = cols[0], cols[1]
+        joined = joined.join(dfs[tbl], on=joined[lk] == dfs[tbl][rk], how=how)
+    return joined
+
+
 def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     exclude = exclude or []
     numeric_types = {"int", "bigint", "double", "float", "long", "decimal", "smallint", "tinyint"}
