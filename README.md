@@ -63,6 +63,17 @@ print("Joinable:", plan["joinable"])
 print("Unjoinable:", plan["unjoinable"])
 ```
 
+## Inspect joined data before training
+```python
+from smart_pipeline import plan_joins, join_tables_with_plan
+# plan joins
+join_map = { (rel['from_table'], rel['to_table']): (rel['from_col'], rel['to_col']) for _, rel in relationships.iterrows() }
+plan = plan_joins(dfs, semantic_relations=None, join_map=join_map)
+# build a joined Spark DF for EDA
+joined = join_tables_with_plan(dfs, plan['joinable'], base_table='orders', how='inner')
+joined.show(5)
+joined.printSchema()
+```
 ## Spark ML Pipeline
 - `run_full_spark_ml_pipeline`: load/join tables, auto-detect features, preprocess (encode/scale), train, evaluate, and save pipeline + metadata.
 - `auto_join_and_train`: given Spark DataFrames, label table/column, join_map/semantic hints → join and train in one step.
