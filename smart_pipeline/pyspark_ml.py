@@ -126,20 +126,46 @@ def join_tables(dfs: Dict[str, object], join_config: Optional[Dict[str, Dict[str
     return joined
 
 
-def suggest_joins(dfs: Dict[str, object]) -> Dict[Tuple[str, str], List[str]]:
+def suggest_joins(dfs: Dict[str, object], semantic_relations: Optional[Dict[str, Dict[str, str]]] = None) -> Dict[Tuple[str, str], List[str]]:
     """
-    Suggest join keys between all pairs of tables based on common column names.
+    Suggest join keys between all pairs of tables based on:
+      1) Provided semantic_relations (table -> {"join_key": "..."}).
+      2) Common column names (prioritizing *id columns).
+      3) Most frequent column names across all tables (fallback).
     Returns a mapping: (tableA, tableB) -> [candidate_cols]
     """
-    suggestions = {}
+    suggestions: Dict[Tuple[str, str], List[str]] = {}
     tables = list(dfs.keys())
+
+    # Global frequency of column names across all tables
+    col_freq: Dict[str, int] = {}
+    for df in dfs.values():
+        for c in df.columns:
+            col_freq[c] = col_freq.get(c, 0) + 1
+
     for i, a in enumerate(tables):
         for b in tables[i + 1 :]:
+            # 1) semantic relations
+            if semantic_relations and a in semantic_relations and b in semantic_relations:
+                ak = semantic_relations[a].get("join_key")
+                bk = semantic_relations[b].get("join_key")
+                if ak and bk:
+                    suggestions[(a, b)] = [ak] if ak == bk else [ak, bk]
+                    continue
+
             common = set(dfs[a].columns) & set(dfs[b].columns)
             id_like = [c for c in common if c.lower().endswith("id")]
-            candidates = id_like if id_like else list(common)
-            if candidates:
-                suggestions[(a, b)] = candidates
+            if id_like:
+                suggestions[(a, b)] = id_like
+            elif common:
+                suggestions[(a, b)] = list(common)
+            else:
+                # 3) Fallback: most frequent column names across all tables
+                frequent_cols = sorted(col_freq.items(), key=lambda x: x[1], reverse=True)
+                if frequent_cols:
+                    top = [c for c, freq in frequent_cols if freq > 1][:1]
+                    if top:
+                        suggestions[(a, b)] = top
     return suggestions
 
 
