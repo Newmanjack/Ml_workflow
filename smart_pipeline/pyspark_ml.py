@@ -126,10 +126,15 @@ def join_tables(dfs: Dict[str, object], join_config: Optional[Dict[str, Dict[str
     return joined
 
 
-def suggest_joins(dfs: Dict[str, object], semantic_relations: Optional[Dict[str, Dict[str, str]]] = None) -> Dict[Tuple[str, str], List[str]]:
+def suggest_joins(
+    dfs: Dict[str, object],
+    semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+) -> Dict[Tuple[str, str], List[str]]:
     """
     Suggest join keys between all pairs of tables based on:
       1) Provided semantic_relations (table -> {"join_key": "..."}).
+      2) Provided join_map: {(from_table, to_table): {"from_col": "...", "to_col": "..."}}.
       2) Common column names (prioritizing *id columns).
       3) Most frequent column names across all tables (fallback).
     Returns a mapping: (tableA, tableB) -> [candidate_cols]
@@ -145,6 +150,14 @@ def suggest_joins(dfs: Dict[str, object], semantic_relations: Optional[Dict[str,
 
     for i, a in enumerate(tables):
         for b in tables[i + 1 :]:
+            # 1b) explicit join_map
+            if join_map and (a, b) in join_map:
+                entry = join_map[(a, b)]
+                fk = entry.get("from_col")
+                tk = entry.get("to_col")
+                if fk and tk:
+                    suggestions[(a, b)] = [fk, tk] if fk != tk else [fk]
+                    continue
             # 1) semantic relations
             if semantic_relations and a in semantic_relations and b in semantic_relations:
                 ak = semantic_relations[a].get("join_key")
