@@ -17,6 +17,7 @@ from .pyspark_ml import (
     suggest_joins,
     TableSourceConfig,
     ModelConfig,
+    auto_join_and_train,
 )
 from .pandas_bridge import spark_to_pandas_safe, pandas_api_on_spark
 from .spark_pandas import to_pandas_api, shape as spark_shape, ps as spark_pandas_module
@@ -70,6 +71,7 @@ __all__ = [
     "suggest_joins",
     "TableSourceConfig",
     "ModelConfig",
+    "auto_join_and_train",
     "spark_to_pandas_safe",
     "pandas_api_on_spark",
     "to_pandas_api",

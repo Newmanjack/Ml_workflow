@@ -411,6 +411,50 @@ def train_pipeline(spark_df, model_cfg: ModelConfig, feature_cols: Optional[List
     return model, meta
 
 
+def auto_join_and_train(
+    dfs: Dict[str, object],
+    label_table: str,
+    label_column: str,
+    model_cfg: ModelConfig,
+    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+    semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
+    feature_columns: Optional[List[str]] = None,
+):
+    """
+    Auto-join multiple Spark DataFrames using join_map/semantic_relations/common columns,
+    then train a Spark ML model.
+    """
+    from pyspark.sql import functions as F
+
+    if label_table not in dfs:
+        raise ValueError(f"Label table '{label_table}' not found in provided dfs.")
+
+    base = dfs[label_table]
+    join_suggestions = suggest_joins(dfs, semantic_relations=semantic_relations, join_map=join_map)
+
+    for tbl_name, sdf in dfs.items():
+        if tbl_name == label_table:
+            continue
+        key = (label_table, tbl_name) if (label_table, tbl_name) in join_suggestions else (tbl_name, label_table)
+        if key not in join_suggestions:
+            # skip if no join path
+            continue
+        candidates = join_suggestions[key]
+        if len(candidates) == 1:
+            lk = rk = candidates[0]
+        elif len(candidates) >= 2:
+            lk, rk = candidates[0], candidates[1]
+        else:
+            continue
+        base = base.join(sdf, on=base[lk] == sdf[rk], how="inner")
+
+    model_cfg = model_cfg
+    model_cfg.label_column = label_column
+    model, meta = train_pipeline(base, model_cfg, feature_columns)
+    meta.update({"joined_tables": list(dfs.keys()), "join_suggestions": {str(k): v for k, v in join_suggestions.items()}})
+    return model, meta, base
+
+
 def save_pipeline(model, meta: Dict[str, object], path: str):
     # Save Spark pipeline
     model.write().overwrite().save(path)
