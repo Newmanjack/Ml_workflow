@@ -204,6 +204,7 @@ def join_tables_with_plan(
     join_plan: Dict[Tuple[str, str], List[str]],
     base_table: Optional[str] = None,
     how: str = "inner",
+    fallback_on_common_cols: bool = True,
 ):
     """
     Join a dict of Spark DataFrames using a provided join_plan (from plan_joins/suggest_joins).
