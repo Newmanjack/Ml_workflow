@@ -182,6 +182,25 @@ def suggest_joins(
     return suggestions
 
 
+def plan_joins(
+    dfs: Dict[str, object],
+    semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+) -> Dict[str, object]:
+    """
+    Plan joins across tables and report joinable vs unjoinable pairs.
+    Returns {"joinable": {(a,b): [candidates]}, "unjoinable": [(a,b), ...]}
+    """
+    suggestions = suggest_joins(dfs, semantic_relations=semantic_relations, join_map=join_map)
+    tables = list(dfs.keys())
+    unjoinable = []
+    for i, a in enumerate(tables):
+        for b in tables[i + 1 :]:
+            if (a, b) not in suggestions and (b, a) not in suggestions:
+                unjoinable.append((a, b))
+    return {"joinable": suggestions, "unjoinable": unjoinable}
+
+
 def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     exclude = exclude or []
     numeric_types = {"int", "bigint", "double", "float", "long", "decimal", "smallint", "tinyint"}
