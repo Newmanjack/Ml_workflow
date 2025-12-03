@@ -21,6 +21,7 @@ from .pyspark_ml import (
     ModelConfig,
     auto_join_and_train,
     train_per_table,
+    build_master_dataset,
 )
 from .pandas_bridge import spark_to_pandas_safe, pandas_api_on_spark
 from .spark_pandas import to_pandas_api, shape as spark_shape, ps as spark_pandas_module
@@ -78,6 +79,7 @@ __all__ = [
     "ModelConfig",
     "auto_join_and_train",
     "train_per_table",
+    "build_master_dataset",
     "spark_to_pandas_safe",
     "pandas_api_on_spark",
     "to_pandas_api",

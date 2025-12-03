@@ -229,6 +229,26 @@ def join_tables_with_plan(
     return joined
 
 
+def build_master_dataset(
+    dfs: Dict[str, object],
+    base_table: Optional[str] = None,
+    semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Tuple[str, str]]] = None,
+    how: str = "inner",
+) -> Tuple[object, Dict[str, object], Dict[str, object]]:
+    """
+    Build a master joined Spark DataFrame and return any unjoinable tables separately.
+    Returns (master_df, joinable_info, unjoinable_dfs).
+      - joinable_info: {"plan": plan["joinable"], "unjoinable": plan["unjoinable"]}
+      - unjoinable_dfs: dict of table_name -> Spark DF for tables that could not be joined
+    """
+    plan = plan_joins(dfs, semantic_relations=semantic_relations, join_map=join_map)
+    master = join_tables_with_plan(dfs, plan["joinable"], base_table=base_table, how=how, fallback_on_common_cols=True)
+    unjoinable_names = {name for pair in plan["unjoinable"] for name in pair}
+    unjoinable_dfs = {name: dfs[name] for name in unjoinable_names if name in dfs}
+    return master, {"plan": plan["joinable"], "unjoinable": plan["unjoinable"]}, unjoinable_dfs
+
+
 def detect_feature_types(df, exclude: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     exclude = exclude or []
     numeric_types = {"int", "bigint", "double", "float", "long", "decimal", "smallint", "tinyint"}
