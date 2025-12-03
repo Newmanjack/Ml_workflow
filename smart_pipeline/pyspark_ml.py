@@ -12,6 +12,7 @@ import json
 import logging
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Tuple
+import copy
 
 
 def _require_pyspark():
@@ -499,6 +500,28 @@ def auto_join_and_train(
     model, meta = train_pipeline(base, model_cfg, feature_columns)
     meta.update({"joined_tables": list(dfs.keys()), "join_suggestions": {str(k): v for k, v in join_suggestions.items()}})
     return model, meta, base
+
+
+def train_per_table(
+    dfs: Dict[str, object],
+    label_column: str,
+    model_cfg: Optional[ModelConfig] = None,
+    feature_columns: Optional[List[str]] = None,
+) -> Dict[str, Tuple[object, Dict]]:
+    """
+    Train separate models on each table that contains the label_column (no joins).
+    Returns a mapping table_name -> (model, meta).
+    """
+    results = {}
+    for name, sdf in dfs.items():
+        if label_column not in sdf.columns:
+            continue
+        cfg = copy.deepcopy(model_cfg) if model_cfg else ModelConfig(label_column=label_column)
+        cfg.label_column = label_column
+        model, meta = train_pipeline(sdf, cfg, feature_columns)
+        meta.update({"table": name, "join_used": False})
+        results[name] = (model, meta)
+    return results
 
 
 def save_pipeline(model, meta: Dict[str, object], path: str):
