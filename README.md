@@ -359,3 +359,8 @@ print(meta)  # metrics + config + features used
   )
   # df is aggregated (and features if enabled); heavy lifting stayed in Spark reduction.
   ```
+
+
+# Join map example
+join_map = { (rel["from_table"], rel["to_table"]): (rel["from_col"], rel["to_col"]) for _, rel in relationships.iterrows() }
+plan = plan_joins(dfs, semantic_relations=None, join_map=join_map)
