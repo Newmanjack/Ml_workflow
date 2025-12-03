@@ -285,7 +285,14 @@ model, test_df, metrics = train_spark_model(
 print(metrics)
 ```
 
-### Spark-only multi-table ML pipeline (scales to many tables)
+### Join planning (joinable vs unjoinable)
+```python
+from smart_pipeline import plan_joins
+plan = plan_joins(dfs, semantic_relations=None, join_map={("orders","line_items"): {"from_col": "order_id", "to_col": "order_id"}})
+print("Joinable:", plan['joinable'])
+print("Unjoinable:", plan['unjoinable'])
+```
+## Spark-only multi-table ML pipeline (scales to many tables)
 ```python
 from smart_pipeline import run_full_spark_ml_pipeline, PipelineConfig, TableSourceConfig, ModelConfig
 
