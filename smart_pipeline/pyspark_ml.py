@@ -129,12 +129,12 @@ def join_tables(dfs: Dict[str, object], join_config: Optional[Dict[str, Dict[str
 def suggest_joins(
     dfs: Dict[str, object],
     semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
-    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Tuple[str, str]]] = None,
 ) -> Dict[Tuple[str, str], List[str]]:
     """
     Suggest join keys between all pairs of tables based on:
       1) Provided semantic_relations (table -> {"join_key": "..."}).
-      2) Provided join_map: {(from_table, to_table): {"from_col": "...", "to_col": "..."}}.
+      2) Provided join_map: {(from_table, to_table): (from_col, to_col)}}.
       2) Common column names (prioritizing *id columns).
       3) Most frequent column names across all tables (fallback).
     Returns a mapping: (tableA, tableB) -> [candidate_cols]
@@ -152,9 +152,7 @@ def suggest_joins(
         for b in tables[i + 1 :]:
             # 1b) explicit join_map
             if join_map and (a, b) in join_map:
-                entry = join_map[(a, b)]
-                fk = entry.get("from_col")
-                tk = entry.get("to_col")
+                fk, tk = join_map[(a, b)]
                 if fk and tk:
                     suggestions[(a, b)] = [fk, tk] if fk != tk else [fk]
                     continue
@@ -185,7 +183,7 @@ def suggest_joins(
 def plan_joins(
     dfs: Dict[str, object],
     semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
-    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Tuple[str, str]]] = None,
 ) -> Dict[str, object]:
     """
     Plan joins across tables and report joinable vs unjoinable pairs.
@@ -435,7 +433,7 @@ def auto_join_and_train(
     label_table: str,
     label_column: str,
     model_cfg: ModelConfig,
-    join_map: Optional[Dict[Tuple[str, str], Dict[str, str]]] = None,
+    join_map: Optional[Dict[Tuple[str, str], Tuple[str, str]]] = None,
     semantic_relations: Optional[Dict[str, Dict[str, str]]] = None,
     feature_columns: Optional[List[str]] = None,
 ):
