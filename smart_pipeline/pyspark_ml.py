@@ -209,23 +209,58 @@ def join_tables_with_plan(
 ):
     """
     Join a dict of Spark DataFrames using a provided join_plan (from plan_joins/suggest_joins).
+    Iteratively joins as many tables as possible:
+      - First preference: explicit join_plan keys
+      - Optional fallback: common columns (preferring *_id)
     Returns the joined Spark DataFrame.
     """
+    import logging
+
+    logger = logging.getLogger("smart_pipeline.pyspark_ml")
+
+    def pick_common_key(cols_a, cols_b):
+        common = set(cols_a) & set(cols_b)
+        if not common:
+            return None
+        id_like = [c for c in common if c.lower().endswith("id")]
+        return id_like[0] if id_like else list(common)[0]
+
     tables = list(dfs.keys())
     base = base_table or tables[0]
     joined = dfs[base]
-    for tbl in tables:
-        if tbl == base:
-            continue
-        key = (base, tbl) if (base, tbl) in join_plan else (tbl, base)
-        if key not in join_plan:
-            continue
-        cols = join_plan[key]
-        if len(cols) == 1:
-            lk = rk = cols[0]
-        else:
-            lk, rk = cols[0], cols[1]
-        joined = joined.join(dfs[tbl], on=joined[lk] == dfs[tbl][rk], how=how)
+    joined_tables = {base}
+    remaining = set(tables) - joined_tables
+
+    while remaining:
+        progress = False
+        for tbl in list(remaining):
+            candidate = None
+            for jt in list(joined_tables):
+                key = (jt, tbl) if (jt, tbl) in join_plan else (tbl, jt)
+                if key in join_plan:
+                    cols = join_plan[key]
+                    if len(cols) == 1:
+                        lk = rk = cols[0]
+                    else:
+                        lk, rk = cols[0], cols[1]
+                    candidate = (lk, rk)
+                    break
+            if not candidate and fallback_on_common_cols:
+                common_key = pick_common_key(joined.columns, dfs[tbl].columns)
+                if common_key:
+                    candidate = (common_key, common_key)
+            if candidate:
+                lk, rk = candidate
+                try:
+                    joined = joined.join(dfs[tbl], on=joined[lk] == dfs[tbl][rk], how=how)
+                    joined_tables.add(tbl)
+                    remaining.remove(tbl)
+                    progress = True
+                    logger.info("Joined %s using %s = %s", tbl, lk, rk)
+                except Exception as e:  # pragma: no cover
+                    logger.warning("Failed to join %s: %s", tbl, e)
+        if not progress:
+            break
     return joined
 
 
