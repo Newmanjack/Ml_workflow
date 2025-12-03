@@ -19,6 +19,7 @@ from .pyspark_ml import (
     ModelConfig,
 )
 from .pandas_bridge import spark_to_pandas_safe, pandas_api_on_spark
+from .spark_pandas import to_pandas_api, shape as spark_shape, ps as spark_pandas_module
 
 # DuckDB/pandas helpers are optional; guard import so Spark-only envs can still import the package.
 PipelineRunner = None
@@ -71,6 +72,9 @@ __all__ = [
     "ModelConfig",
     "spark_to_pandas_safe",
     "pandas_api_on_spark",
+    "to_pandas_api",
+    "spark_shape",
+    "spark_pandas_module",
 ]
 
 if _DUCKDB_AVAILABLE:
