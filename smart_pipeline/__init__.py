@@ -18,6 +18,7 @@ from .pyspark_ml import (
     TableSourceConfig,
     ModelConfig,
 )
+from .pandas_bridge import spark_to_pandas_safe, pandas_api_on_spark
 
 # DuckDB/pandas helpers are optional; guard import so Spark-only envs can still import the package.
 PipelineRunner = None
@@ -68,6 +69,8 @@ __all__ = [
     "suggest_joins",
     "TableSourceConfig",
     "ModelConfig",
+    "spark_to_pandas_safe",
+    "pandas_api_on_spark",
 ]
 
 if _DUCKDB_AVAILABLE:
